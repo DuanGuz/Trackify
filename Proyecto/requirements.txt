@@ -1,0 +1,4 @@
+django
+django-admin-interface
+django-crispy-forms
+pillow
