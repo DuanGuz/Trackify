@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'colorfield',
     'django.contrib.humanize',
+    'crispy_forms',
+    'rest_framework',
 ]
 
 X_FRAME_OPTIONS='SAMEORIGIN'
@@ -129,3 +131,9 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = 'core.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
