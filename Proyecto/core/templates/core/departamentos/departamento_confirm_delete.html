@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h2>Eliminar departamento</h2>
+    <p>¿Seguro que deseas eliminar <strong>{{ object.nombre }}</strong>?</p>
+    <p>Esta acción no se puede deshacer.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Sí, eliminar</button>
+        <a href="{% url 'departamento_list' %}">Cancelar</a>
+    </form>
+    {% endblock %}
+</body>
+
+</html>

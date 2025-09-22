@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% load crispy_forms_tags %}
+    {% block content %}
+    <h2>Cambiar estado</h2>
+    <p><strong>Tarea:</strong> {{ object.titulo }}</p>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }} {# o |crispy #}
+        <button type="submit">Actualizar</button>
+        <a href="{% url 'tarea_list_trab' %}">Cancelar</a>
+    </form>
+    {% endblock %}
+
+</body>
+
+</html>

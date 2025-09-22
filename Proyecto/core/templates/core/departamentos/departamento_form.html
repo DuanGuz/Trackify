@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% load crispy_forms_tags %}
+    {% block content %}
+    <h2>{% if form.instance.pk %}Editar departamento{% else %}Crear departamento{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }} {# o {{ form.as_p }} #}
+        <button type="submit">Guardar</button>
+        <a href="{% url 'departamento_list' %}">Cancelar</a>
+    </form>
+
+    {% if messages %}
+    <ul style="margin-top:1rem;">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endblock %}
+
+</body>
+
+</html>

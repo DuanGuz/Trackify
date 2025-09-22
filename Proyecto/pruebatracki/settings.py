@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'colorfield',
     'django.contrib.humanize',
     'crispy_forms',
+    "crispy_bootstrap5",
     'rest_framework',
 ]
 
@@ -137,3 +138,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"

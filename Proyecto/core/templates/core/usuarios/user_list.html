@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    {% load rut_tags %}
+    <h1>Usuarios (RRHH)</h1>
+
+    <form method="get" style="margin: 10px 0;">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar usuario, email, RUT, rol...">
+        <button type="submit">Buscar</button>
+        <a href="{% url 'user_list' %}">Limpiar</a>
+    </form>
+
+    <p><a href="{% url 'user_create' %}">➕ Crear usuario</a></p>
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Username</th>
+            <th>Nombre</th>
+            <th>RUT</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+        </tr>
+        {% for u in usuarios %}
+        <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.primer_nombre }} {{ u.primer_apellido }}</td>
+            <td>{{ u.rut|rut }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.rol.nombre }}</td>
+            <td>
+                <a href="{% url 'user_update' u.pk %}">Editar</a> |
+                <a href="{% url 'user_delete' u.pk %}">Eliminar</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">No hay usuarios.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if is_paginated %}
+    <div style="margin-top:10px;">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
+        <span>Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <ul style="margin-top:1rem;">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endblock %}
+    <form method="post" action="{% url 'web_logout' %}">
+        {% csrf_token %}
+        <button type="submit">Cerrar sesión</button>
+    </form>
+    <a href="{% url 'departamento_list' %}">Departamentos</a>
+    <hr>
+    <a href="{% url 'tarea_list_gs' %}">Tareas</a>
+</body>
+
+</html>

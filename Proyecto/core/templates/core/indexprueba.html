@@ -10,5 +10,6 @@
         {% csrf_token %}
         <button type="submit">Cerrar sesión</button>
     </form>
+    <a href="{% url 'user_list' %}" class="btn btn-secondary">usuarios</a>
 </body>
 </html>

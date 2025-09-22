@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h1>Tareas</h1>
+
+    <form method="get" style="margin:10px 0;">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar título, asignado, departamento">
+        <select name="estado">
+            <option value="Pendiente" {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
+            <option value="En progreso" {% if request.GET.estado == "En progreso" %}selected{% endif %}>En progreso
+            </option>
+            <option value="Atrasada" {% if request.GET.estado == "Atrasada" %}selected{% endif %}>Atrasada</option>
+            <option value="Finalizada" {% if request.GET.estado == "Finalizada" %}selected{% endif %}>Finalizada</option>
+
+        </select>
+
+        <button type="submit">Filtrar</button>
+        <a href="{% url 'tarea_list_gs' %}">Limpiar</a>
+    </form>
+
+    <p><a href="{% url 'tarea_create' %}">➕ Crear tarea</a></p>
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Título</th>
+            <th>Asignado</th>
+            <th>Depto</th>
+            <th>Estado</th>
+            <th>Vence</th>
+            <th>Acciones</th>
+        </tr>
+        {% for t in tareas %}
+        <tr>
+            <td><a href="{% url 'tarea_detail' t.pk %}">{{ t.titulo }}</a></td>
+            <td>{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
+            <td>{{ t.departamento.nombre }}</td>
+            <td>{{ t.estado }}</td>
+            <td>{{ t.fecha_limite|date:"d/m/Y" }}</td>
+            <td>
+                <a href="{% url 'tarea_update' t.pk %}">Editar</a> |
+                <a href="{% url 'tarea_delete' t.pk %}">Eliminar</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Sin tareas.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if is_paginated %}
+    <div style="margin-top:10px;">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
+        <span>Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <ul>{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% endblock %}
+
+</body>
+
+</html>
