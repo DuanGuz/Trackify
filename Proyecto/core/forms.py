@@ -1,13 +1,18 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
 from .models import *
+from datetime import date
 
+User = get_user_model()
+#REGISTRO GERENTE:
 class RegistroGerenteForm(UserCreationForm):
     email = forms.EmailField(required=True)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password1', 'password2')
+        fields = ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'rut', 
+                  'username', 'email', 'password1', 'password2']
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -16,3 +21,126 @@ class RegistroGerenteForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+#GESTIÓN DE USUARIOS (RRHH):
+class RegistroUsuarioRRHHForm(forms.ModelForm):
+    rol = forms.ModelChoiceField(
+        queryset=Rol.objects.none(),  # se setea en __init__
+        required=True,
+        label="Rol",
+        help_text="Selecciona el rol del usuario"
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'primer_nombre','segundo_nombre','primer_apellido','segundo_apellido',
+            'rut','rol'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Puedes limitar a roles permitidos para RRHH:
+        # self.fields['rol'].queryset = Rol.objects.filter(nombre__in=['Trabajador','Supervisor','Gerente'])
+        # O permitir todos:
+        self.fields['rol'].queryset = Rol.objects.all().order_by('nombre')
+
+    def clean_rut(self):
+        rut = clean_rut(self.cleaned_data.get("rut", ""))
+        if not is_valid_rut(rut):
+            raise forms.ValidationError("RUT inválido.")
+        if User.objects.filter(rut=rut).exists():
+            raise forms.ValidationError("Ya existe un usuario con este RUT.")
+        return rut
+
+class UserUpdateForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput, required=False)
+
+    class Meta:
+        model = User
+        fields = ['primer_nombre','segundo_nombre','primer_apellido','segundo_apellido','rut','username','email','rol']
+
+    def clean_rut(self):
+        rut = clean_rut(self.cleaned_data.get("rut", ""))
+        if not is_valid_rut(rut):
+            raise forms.ValidationError("RUT inválido.")
+        # evitar duplicado al editar
+        qs = User.objects.filter(rut=rut).exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Ya existe un usuario con este RUT.")
+        return rut
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        pwd = self.cleaned_data.get('password')
+        if pwd:
+            user.set_password(pwd)
+        if commit:
+            user.save()
+        return user
+
+class DepartamentoForm(forms.ModelForm):
+    class Meta:
+        model = Departamento
+        fields = ['nombre', 'descripcion']
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'rows': 3})
+        }
+
+    def clean_nombre(self):
+        nombre = (self.cleaned_data.get('nombre') or '').strip()
+        if not nombre:
+            raise forms.ValidationError("El nombre es obligatorio.")
+        # Unicidad case-insensitive
+        qs = Departamento.objects.filter(nombre__iexact=nombre)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("Ya existe un departamento con ese nombre.")
+        return nombre
+    
+class TareaForm(forms.ModelForm):
+    class Meta:
+        model = Tarea
+        fields = ['titulo','descripcion','departamento','asignado','fecha_limite','estado']
+        widgets = {
+            'descripcion': forms.Textarea(attrs={'rows':3}),
+            'fecha_limite': forms.DateInput(attrs={'type':'date'})
+        }
+
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        # Solo mostrar trabajadores en "asignado"
+        self.fields['asignado'].queryset = User.objects.filter(rol__nombre='Trabajador').order_by('primer_apellido','primer_nombre')
+        # Estado por defecto en crear
+        if request and getattr(request.user, "rol", None) and request.user.rol.nombre in ['Gerente','Supervisor']:
+            # Opción 1: quitar el campo del formulario
+            self.fields.pop('estado', None)
+            # (Opción 2 alternativa: self.fields['estado'].disabled = True)
+
+    def clean_fecha_limite(self):
+        f = self.cleaned_data['fecha_limite']
+        if f < date.today():
+            raise forms.ValidationError("La fecha límite no puede ser en el pasado.")
+        return f
+
+
+class TareaEstadoForm(forms.ModelForm):
+    comentario = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows':2}), help_text="Opcional")
+
+    class Meta:
+        model = Tarea
+        fields = ['estado']  # solo estado cambia el trabajador
+
+    def save(self, user=None, commit=True):
+        tarea = super().save(commit=False)
+        if commit:
+            tarea.save()
+            texto = self.cleaned_data.get("comentario", "").strip()
+            # si llega comentario, lo guardamos
+            comentario = self.cleaned_data.get("comentario")
+            if texto and user is not None:
+                Comentario.objects.create(tarea=tarea, usuario=user, contenido=texto)
+        return tarea

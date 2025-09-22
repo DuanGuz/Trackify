@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h1>Departamentos</h1>
+
+    <form method="get" style="margin:10px 0;">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar por nombre o descripción">
+        <button type="submit">Buscar</button>
+        <a href="{% url 'departamento_list' %}">Limpiar</a>
+    </form>
+
+    <p><a href="{% url 'departamento_create' %}">➕ Crear departamento</a></p>
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Creado</th>
+            <th>Acciones</th>
+            <th>Tareas</th>
+        </tr>
+        {% for d in departamentos %}
+        <tr>
+            <td>{{ d.nombre }}</td>
+            <td>{{ d.descripcion|default:"—" }}</td>
+            <td>{{ d.created_at|date:"d/m/Y H:i" }}</td>
+            <td>
+                <a href="{% url 'departamento_update' d.pk %}">Editar</a> |
+                <a href="{% url 'departamento_delete' d.pk %}">Eliminar</a>
+            </td>
+            <td>{{ d.total_tareas }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No hay departamentos.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if is_paginated %}
+    <div style="margin-top:10px;">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
+        <span>Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <ul style="margin-top:1rem;">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endblock %}
+
+</body>
+
+</html>

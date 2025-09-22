@@ -4,3 +4,4 @@ django-crispy-forms
 pillow
 djangorestframework
 djangorestframework-simplejwt
+crispy-bootstrap5

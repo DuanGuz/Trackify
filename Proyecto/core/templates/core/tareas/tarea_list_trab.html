@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h1>Mis tareas</h1>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Título</th>
+            <th>Depto</th>
+            <th>Estado</th>
+            <th>Vence</th>
+            <th>Acciones</th>
+        </tr>
+        {% for t in tareas %}
+        <tr>
+            <td><a href="{% url 'tarea_detail' t.pk %}">{{ t.titulo }}</a></td>
+            <td>{{ t.departamento.nombre }}</td>
+            <td>{{ t.estado }}</td>
+            <td>{{ t.fecha_limite|date:"d/m/Y" }}</td>
+            <td><a href="{% url 'tarea_estado' t.pk %}">Cambiar estado</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No tienes tareas.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if messages %}
+    <ul>{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% endblock %}
+
+</body>
+
+</html>

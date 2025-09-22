@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h2>{{ tarea.titulo }}</h2>
+    <p><strong>Asignado:</strong> {{ tarea.asignado.primer_nombre }} {{ tarea.asignado.primer_apellido }}</p>
+    <p><strong>Departamento:</strong> {{ tarea.departamento.nombre }}</p>
+    <p><strong>Estado:</strong> {{ tarea.estado }}</p>
+    <p><strong>Vence:</strong> {{ tarea.fecha_limite|date:"d/m/Y" }}</p>
+    <p><strong>Descripción:</strong><br>{{ tarea.descripcion|linebreaks }}</p>
+
+    <h3>Comentarios</h3>
+    <ul>
+        {% for c in tarea.comments.all %}
+        <li><strong>{{ c.usuario.username }}</strong> ({{ c.created_at|date:"d/m/Y H:i" }}): {{ c.contenido }}</li>
+        {% empty %}
+        <li>Sin comentarios.</li>
+        {% endfor %}
+    </ul>
+    {% endblock %}
+
+</body>
+
+</html>
