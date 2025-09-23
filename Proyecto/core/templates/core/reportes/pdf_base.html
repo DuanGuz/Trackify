@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 15mm 20mm 20mm 20mm; } /* margen superior más chico */
+    body { font-family: DejaVu Sans, sans-serif; font-size: 11pt; }
+
+    header {
+      text-align: center;
+      margin-top: 0;        /* elimina espacio arriba */
+      margin-bottom: 5px;   /* menos espacio abajo */
+      padding-top: 0;
+      padding-bottom: 5px;
+    }
+
+    header img { width:200px; height:auto; }
+    header h1 { margin: 5px 0 0; font-size: 18pt; }
+
+    footer {
+      position: fixed;
+      bottom: -10mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 9pt;
+      color: #555;
+      border-top: 1px solid #999;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #333; padding: 6px; }
+    th { background: #eee; }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- cambia la ruta si tu logo está en static/img/logo.png -->
+    <img src="{% static 'core/img/logo.png' %}" alt="Logo">
+    <h1>Reporte de {{ titulo }}</h1>
+  </header>
+
+  <p>Generado el {{ now|date:"d/m/Y H:i" }}</p>
+
+  <table>
+    {% block content_table %}{% endblock %}
+  </table>
+
+  <footer>
+    Trackify © {{ now|date:"Y" }} — Página {{ page }}
+  </footer>
+</body>
+</html>

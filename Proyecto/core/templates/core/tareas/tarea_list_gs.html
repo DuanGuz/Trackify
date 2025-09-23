@@ -46,7 +46,8 @@
             <td>{{ t.fecha_limite|date:"d/m/Y" }}</td>
             <td>
                 <a href="{% url 'tarea_update' t.pk %}">Editar</a> |
-                <a href="{% url 'tarea_delete' t.pk %}">Eliminar</a>
+                <a href="{% url 'tarea_delete' t.pk %}">Eliminar</a>|
+                <a href="{% url 'tarea_historial' t.pk %}">Historial</a>
             </td>
         </tr>
         {% empty %}

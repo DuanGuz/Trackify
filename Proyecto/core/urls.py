@@ -38,4 +38,26 @@ urlpatterns = [
 
     # Detalle (común)
     path("tareas/<int:pk>/", TareaDetailView.as_view(), name="tarea_detail"),
+
+    # EVALUACIONES:
+    path("evaluaciones/", EvalListGSView.as_view(), name="eval_list_gs"), # Gerente/Supervisor
+    path("mis-evaluaciones/", EvalListTrabajadorView.as_view(), name="eval_list_trab"), # Trabajador
+    path("evaluaciones/nueva/", EvalCreateView.as_view(), name="eval_create"), # Supervisor
+    path("evaluaciones/<int:pk>/editar/", EvalUpdateView.as_view(), name="eval_update"),
+    path("evaluaciones/<int:pk>/eliminar/", EvalDeleteView.as_view(), name="eval_delete"),
+
+    #DASHBOARD/REPORTES:
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
+    path("reportes/tareas/", ReporteTareasView.as_view(), name="reporte_tareas"),
+    path("reportes/tareas/pdf/", exportar_tareas_pdf, name="reporte_tareas_pdf"),
+    path("reportes/tareas/xlsx/", exportar_tareas_xlsx, name="reporte_tareas_xlsx"),
+
+    path("reportes/evaluaciones/", ReporteEvaluacionesView.as_view(), name="reporte_evaluaciones"),
+    path("reportes/evaluaciones/pdf/", exportar_evals_pdf, name="reporte_evals_pdf"),
+    path("reportes/evaluaciones/xlsx/", exportar_evals_xlsx, name="reporte_evals_xlsx"),
+    path("reportes/pdf-base", pdfbase, name="reporte_pdf_base"),
+
+    #HISTORIAL DE TAREAS Y EVALUACIONES:
+    path("tareas/<int:pk>/historial/", TareaHistorialView.as_view(), name="tarea_historial"),
+    path("evaluaciones/<int:pk>/historial/", EvalHistorialView.as_view(), name="eval_historial"),
 ]

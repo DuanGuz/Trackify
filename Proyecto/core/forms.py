@@ -144,3 +144,36 @@ class TareaEstadoForm(forms.ModelForm):
             if texto and user is not None:
                 Comentario.objects.create(tarea=tarea, usuario=user, contenido=texto)
         return tarea
+    
+
+
+class EvaluacionForm(forms.ModelForm):
+    puntaje = forms.IntegerField(min_value=1, max_value=5, label="Puntaje (1-5)")
+
+    class Meta:
+        model = Evaluacion
+        fields = ['trabajador', 'puntaje', 'comentarios']
+        widgets = {'comentarios': forms.Textarea(attrs={'rows':3})}
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)   # podría venir None
+        super().__init__(*args, **kwargs)
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        # queryset SIEMPRE válido (nunca None)
+        self.fields['trabajador'].queryset = User.objects.filter(
+            rol__nombre='Trabajador'
+        ).order_by('primer_apellido','primer_nombre')
+
+    def clean(self):
+        cleaned = super().clean()
+        trabajador = cleaned.get('trabajador')
+        req_user = getattr(self.request, "user", None)
+
+        if req_user and trabajador and trabajador.pk == req_user.pk:
+            raise forms.ValidationError("No puedes evaluarte a ti mismo.")
+        if trabajador and (not trabajador.rol or trabajador.rol.nombre != 'Trabajador'):
+            raise forms.ValidationError("Solo puedes evaluar a usuarios con rol Trabajador.")
+        if req_user and (not getattr(req_user, "rol", None) or req_user.rol.nombre != 'Supervisor') and not getattr(req_user, "is_superuser", False):
+            raise forms.ValidationError("Solo Supervisores pueden crear evaluaciones.")
+        return cleaned

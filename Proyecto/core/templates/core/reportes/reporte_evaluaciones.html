@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h1>Reporte de Evaluaciones</h1>
+
+    <form method="get" style="margin-bottom:10px;">
+        <label>Trabajador:</label>
+        <select name="trabajador">
+            <option value="">--</option>
+            {% for tr in trabajadores %}
+            <option value="{{ tr.id }}" {% if request.GET.trabajador == tr.id|stringformat:"s" %}selected{% endif %}>{{
+                tr.primer_nombre }} {{ tr.primer_apellido }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Supervisor:</label>
+        <select name="supervisor">
+            <option value="">--</option>
+            {% for sp in supervisores %}
+            <option value="{{ sp.id }}" {% if request.GET.supervisor == sp.id|stringformat:"s" %}selected{% endif %}>{{
+                sp.primer_nombre }} {{ sp.primer_apellido }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Puntaje:</label>
+        <select name="puntaje">
+            <option value="">--</option>
+            {% for p in "12345" %}
+            <option value="{{ forloop.counter }}" 
+            {% if request.GET.puntaje == forloop.counter|stringformat:"s" %} selected {% endif %}>
+                {{ forloop.counter }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label>Desde:</label>
+        <input type="date" name="f_ini" value="{{ request.GET.f_ini }}">
+        <label>Hasta:</label>
+        <input type="date" name="f_fin" value="{{ request.GET.f_fin }}">
+
+        <button type="submit">Filtrar</button>
+        <a href="{% url 'reporte_evaluaciones' %}">Limpiar</a>
+    </form>
+
+    <p>
+        <a href="{% url 'reporte_evals_pdf' %}?{{ request.GET.urlencode }}">Exportar PDF</a> |
+        <a href="{% url 'reporte_evals_xlsx' %}?{{ request.GET.urlencode }}">Exportar XLSX</a>
+    </p>
+
+
+    <h3>Detalle</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Trabajador</th>
+            <th>Supervisor</th>
+            <th>Puntaje</th>
+            <th>Fecha</th>
+            <th>Comentarios</th>
+        </tr>
+        {% for e in evaluaciones %}
+        <tr>
+            <td>{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}</td>
+            <td>{{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}</td>
+            <td>{{ e.puntaje }}</td>
+            <td>{{ e.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ e.comentarios|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Sin resultados.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Resumen (promedio por trabajador)</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Trabajador</th>
+            <th>Promedio</th>
+            <th># Eval</th>
+        </tr>
+        {% for r in resumen_trabajadores %}
+        <tr>
+            <td>{{ r.trabajador__primer_nombre }} {{ r.trabajador__primer_apellido }}</td>
+            <td>{{ r.prom|floatformat:2 }}</td>
+            <td>{{ r.total }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Sin datos.</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endblock %}
+
+</body>
+
+</html>
