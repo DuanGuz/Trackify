@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Dashboard</h1>
+
+    <div style="max-width: 680px; margin: 1rem 0;">
+        <h3>Tareas por estado</h3>
+        <canvas id="chartTareasEstado" height="140"></canvas>
+    </div>
+
+    <div style="max-width: 680px; margin: 1rem 0;">
+        <h3>Tareas por departamento</h3>
+        <canvas id="chartTareasDepto" height="140"></canvas>
+    </div>
+    <h1>Dashboard</h1>
+
+    <h3>Usuarios por rol</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Rol</th>
+            <th>Total</th>
+        </tr>
+        {% for r in usuarios_por_rol %}
+        <tr>
+            <td>{{ r.rol__nombre|default:"(Sin rol)" }}</td>
+            <td>{{ r.total }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">Sin datos</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Tareas por estado (Atrasadas: {{ tareas_atrasadas }})</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Estado</th>
+            <th>Total</th>
+        </tr>
+        {% for t in tareas_por_estado %}
+        <tr>
+            <td>{{ t.estado }}</td>
+            <td>{{ t.total }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">Sin datos</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Tareas por departamento</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Departamento</th>
+            <th>Total</th>
+        </tr>
+        {% for d in tareas_por_depto %}
+        <tr>
+            <td>{{ d.departamento__nombre }}</td>
+            <td>{{ d.total }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">Sin datos</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Top 10 trabajadores por promedio</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Trabajador</th>
+            <th>Promedio</th>
+            <th>Evaluaciones</th>
+        </tr>
+        {% for t in top_trabajadores %}
+        <tr>
+            <td>{{ t.trabajador__primer_nombre }} {{ t.trabajador__primer_apellido }}</td>
+            <td>{{ t.prom|floatformat:2 }}</td>
+            <td>{{ t.total }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="3">Sin datos</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+
+</html>

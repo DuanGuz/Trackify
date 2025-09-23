@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    {% block content %}
+    <h1>Evaluaciones</h1>
+
+    <form method="get" style="margin:10px 0;">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar trabajador/supervisor...">
+        <button type="submit">Buscar</button>
+        <a href="{% url 'eval_list_gs' %}">Limpiar</a>
+    </form>
+
+    {% if request.user.rol.nombre == "Supervisor" or request.user.is_superuser %}
+    <p><a href="{% url 'eval_create' %}">➕ Nueva evaluación</a></p>
+    {% endif %}
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Trabajador</th>
+            <th>Supervisor</th>
+            <th>Puntaje</th>
+            <th>Fecha</th>
+            <th>Comentarios</th>
+            <th>Acciones</th>
+        </tr>
+        {% for e in evaluaciones %}
+        <tr>
+            <td>{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}</td>
+            <td>{{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}</td>
+            <td>{{ e.puntaje }}</td>
+            <td>{{ e.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ e.comentarios|default:"—" }}</td>
+            <td>
+                {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" or request.user.rol.nombre == "Supervisor" and e.supervisor_id == request.user.id %}
+                    <a href="{% url 'eval_update' e.pk %}">Editar</a> |
+                    <a href="{% url 'eval_delete' e.pk %}">Eliminar</a>|
+                    <a href="{% url 'eval_historial' e.pk %}">Historial</a>
+                {% else %}
+                — 
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Sin evaluaciones.</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+
+    {% if is_paginated %}
+    <div style="margin-top:10px;">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
+        <span>Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <ul>{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% endblock %}
+
+</body>
+
+</html>

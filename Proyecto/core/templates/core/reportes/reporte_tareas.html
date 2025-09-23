@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    {% block content %}
+    <h1>Reporte de Tareas</h1>
+
+    <form method="get" style="margin-bottom:10px;">
+        <label>Estado:</label>
+        <select name="estado">
+            <option value="">--</option>
+            <option {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
+            <option {% if request.GET.estado == "En progreso" %}selected{% endif %}>En progreso</option>
+            <option {% if request.GET.estado == "Atrasada" %}selected{% endif %}>Atrasada</option>
+            <option {% if request.GET.estado == "Finalizada" %}selected{% endif %}>Finalizada</option>
+        </select>
+
+        <label>Depto:</label>
+        <select name="depto">
+            <option value="">--</option>
+            {% for d in departamentos %}
+            <option value="{{ d.id }}" {% if request.GET.depto == d.id|stringformat:"s" %}selected{% endif %}>
+                {{ d.nombre}}
+            </option>
+            {% endfor %}
+        </select>
+
+        <label>Asignado:</label>
+        <select name="asignado">
+            <option value="">--</option>
+            {% for tr in trabajadores %}
+            <option value="{{ tr.id }}" {% if request.GET.asignado == tr.id|stringformat:"s" %}selected{% endif %}>{{
+                tr.primer_nombre }} {{ tr.primer_apellido }}</option>
+            {% endfor %}
+        </select>
+
+        <label>Desde:</label>
+        <input type="date" name="f_ini" value="{{ request.GET.f_ini }}">
+        <label>Hasta:</label>
+        <input type="date" name="f_fin" value="{{ request.GET.f_fin }}">
+
+        <button type="submit">Filtrar</button>
+        <a href="{% url 'reporte_tareas' %}">Limpiar</a>
+    </form>
+
+    <p>
+        <a href="{% url 'reporte_tareas_pdf' %}?{{ request.GET.urlencode }}">Exportar PDF</a> |
+        <a href="{% url 'reporte_tareas_xlsx' %}?{{ request.GET.urlencode }}">Exportar XLSX</a>
+    </p>
+
+
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Título</th>
+            <th>Departamento</th>
+            <th>Asignado</th>
+            <th>Estado</th>
+            <th>Vence</th>
+        </tr>
+        {% for t in tareas %}
+        <tr>
+            <td>{{ t.titulo }}</td>
+            <td>{{ t.departamento.nombre }}</td>
+            <td>{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
+            <td>{{ t.estado }}</td>
+            <td>{{ t.fecha_limite|date:"Y-m-d" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">Sin resultados.</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endblock %}
+
+</body>
+
+</html>

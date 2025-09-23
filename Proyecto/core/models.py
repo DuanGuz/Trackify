@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from .validators import rut_validator
 from .utils import *
@@ -105,3 +106,49 @@ class Turno(models.Model):
 
     def __str__(self):
         return f"Turno de {self.usuario.username} - {self.fecha}"
+
+class HistorialTarea(models.Model):
+    ACCIONES = [
+        ("CREADA", "Creada"),
+        ("ACTUALIZADA", "Actualizada"),
+        ("ESTADO", "Cambio de estado"),
+        ("ASIGNACION", "Cambio de asignación"),
+        ("FECHA_LIM", "Cambio de fecha límite"),
+        ("COMENTARIO", "Nuevo comentario"),
+        ("ELIMINADA", "Eliminada"),
+    ]
+    tarea = models.ForeignKey('Tarea', on_delete=models.CASCADE, related_name='historial')
+    accion = models.CharField(max_length=20, choices=ACCIONES)
+    campo = models.CharField(max_length=50, blank=True, null=True)   
+    valor_anterior = models.TextField(blank=True, null=True)
+    valor_nuevo = models.TextField(blank=True, null=True)
+    realizado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_accion_display()}] Tarea {self.tarea_id} ({self.created_at:%Y-%m-%d %H:%M})"
+
+
+# (Opcional) Historial de Evaluaciones — preparado para extender luego
+class HistorialEvaluacion(models.Model):
+    ACCIONES = [
+        ("CREADA", "Creada"),
+        ("ACTUALIZADA", "Actualizada"),
+        ("ELIMINADA", "Eliminada"),
+    ]
+    evaluacion = models.ForeignKey('Evaluacion', on_delete=models.CASCADE, related_name='historial')
+    accion = models.CharField(max_length=20, choices=ACCIONES)
+    campo = models.CharField(max_length=50, blank=True, null=True)
+    valor_anterior = models.TextField(blank=True, null=True)
+    valor_nuevo = models.TextField(blank=True, null=True)
+    realizado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_accion_display()}] Eval {self.evaluacion_id} ({self.created_at:%Y-%m-%d %H:%M})"

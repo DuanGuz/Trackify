@@ -4,7 +4,7 @@ class SoloRRHHMixin(UserPassesTestMixin):
     def test_func(self):
         u = self.request.user
         try:
-            return u.is_authenticated and u.rol and u.rol.nombre == 'recursos humanos'
+            return u.is_authenticated and u.rol and u.rol.nombre == 'Recursos humanos'
         except Exception:
             return False
 
@@ -31,8 +31,19 @@ class RolRequiredMixin(UserPassesTestMixin):
         except Exception:
             return False
 
+class SoloGerenteMixin(RolRequiredMixin):
+    allowed = ['Gerente']
+
+class SoloSupervisorMixin(RolRequiredMixin):
+    allowed = ['Supervisor']
+
+class SoloTrabajadorMixin(RolRequiredMixin):
+    allowed = ['Trabajador']   
+
 class SoloGerenteSupervisorMixin(RolRequiredMixin):
     allowed = ['Gerente', 'Supervisor']
 
-class SoloTrabajadorMixin(RolRequiredMixin):
-    allowed = ['Trabajador']        
+     
+
+
+

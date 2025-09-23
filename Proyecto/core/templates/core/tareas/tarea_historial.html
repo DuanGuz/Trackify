@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+{% block content %}
+<h2>Historial de Tarea: {{ tarea.titulo }}</h2>
+<table border="1" cellpadding="6">
+  <tr>
+    <th>Fecha</th><th>Acción</th><th>Campo</th><th>Anterior</th><th>Nuevo</th><th>Por</th>
+  </tr>
+  {% for h in eventos %}
+  <tr>
+    <td>{{ h.created_at|date:"Y-m-d H:i" }}</td>
+    <td>{{ h.get_accion_display }}</td>
+    <td>{{ h.campo|default:"—" }}</td>
+    <td>{{ h.valor_anterior|default:"—" }}</td>
+    <td>{{ h.valor_nuevo|default:"—" }}</td>
+    <td>{% if h.realizado_por %}{{ h.realizado_por.primer_nombre }} {{ h.realizado_por.primer_apellido }}{% else %}—{% endif %}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="6">Sin eventos.</td></tr>
+  {% endfor %}
+</table>
+<p><a href="{% url 'tarea_list_gs' %}">Volver</a></p>
+{% endblock %}
+</body>
+</html>
