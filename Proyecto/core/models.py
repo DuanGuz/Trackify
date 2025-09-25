@@ -1,8 +1,9 @@
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
-from .validators import rut_validator
+from .validators import *
 from .utils import *
+from django.utils import timezone
 
 # Modelo de Rol
 class Rol(models.Model):
@@ -22,6 +23,11 @@ class User(AbstractUser):
     segundo_apellido = models.CharField(max_length=50, blank=True, null=True)
     rut = models.CharField(max_length=12, unique=True, validators=[rut_validator])
     rol = models.ForeignKey("Rol", on_delete=models.SET_NULL, null=True, related_name='users')
+    telefono = models.CharField(
+        max_length=16, blank=True, null=True,
+        validators=[validate_e164],
+        help_text="Formato E.164 (ej: +56912345678)"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -152,3 +158,19 @@ class HistorialEvaluacion(models.Model):
 
     def __str__(self):
         return f"[{self.get_accion_display()}] Eval {self.evaluacion_id} ({self.created_at:%Y-%m-%d %H:%M})"
+    
+class PasswordResetSMS(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="resets_sms")
+    telefono = models.CharField(max_length=20)
+    code_hash = models.CharField(max_length=128)  # hash del código, no guardes el OTP plano
+    intentos = models.PositiveIntegerField(default=0)
+    max_intentos = models.PositiveIntegerField(default=5)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def can_attempt(self):
+        return (not self.used) and (not self.is_expired()) and (self.intentos < self.max_intentos)

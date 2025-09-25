@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    {% block content %}
+    <h2>Mi Perfil</h2>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Usuario</th>
+            <td>{{ usuario.username }}</td>
+        </tr>
+        <tr>
+            <th>Nombre</th>
+            <td>{{ usuario.primer_nombre }} {{ usuario.segundo_nombre }}</td>
+        </tr>
+        <tr>
+            <th>Apellidos</th>
+            <td>{{ usuario.primer_apellido }} {{ usuario.segundo_apellido }}</td>
+        </tr>
+        <tr>
+            <th>RUT</th>
+            <td>{{ usuario.rut }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ usuario.email }}</td>
+        </tr>
+        <tr>
+            <th>Rol</th>
+            <td>{{ usuario.rol.nombre|default:"(sin rol)" }}</td>
+        </tr>
+    </table>
+
+    <p style="margin-top:10px;">
+        <a href="{% url 'perfil_editar' %}">Editar perfil</a> |
+        <a href="{% url 'perfil_password' %}">Cambiar contraseña</a>
+    </p>
+    {% endblock %}
+</body>
+
+</html>

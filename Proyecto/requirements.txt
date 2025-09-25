@@ -7,3 +7,4 @@ djangorestframework-simplejwt
 crispy-bootstrap5
 openpyxl
 xhtml2pdf
+twilio

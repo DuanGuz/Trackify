@@ -25,6 +25,10 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 from .utils_pdf import *
 from .utils_audit import *
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
+from .utils_sms import *
 
 User = get_user_model()
 
@@ -793,6 +797,35 @@ class EvalHistorialView(SoloGerenteSupervisorMixin, DetailView):
         ctx["eventos"] = self.object.historial.select_related("realizado_por")
         return ctx
 
+# PERFIL Y CAMBIO DE PASSWORD:
+class PerfilView(LoginRequiredMixin, DetailView):
+    template_name = "core/perfil/perfil_detail.html"
+    context_object_name = "usuario"
+
+    def get_object(self):
+        return self.request.user
+
+
+class PerfilUpdateView(LoginRequiredMixin, UpdateView):
+    form_class = PerfilForm
+    template_name = "core/perfil/perfil_form.html"
+    success_url = reverse_lazy("perfil")
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, "Perfil actualizado correctamente.")
+        return super().form_valid(form)
+
+
+class MiPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    template_name = "core/perfil/password_change.html"
+    success_url = reverse_lazy("perfil")
+
+    def form_valid(self, form):
+        messages.success(self.request, "Contraseña actualizada.")
+        return super().form_valid(form)
 
 
 
@@ -800,6 +833,127 @@ class EvalHistorialView(SoloGerenteSupervisorMixin, DetailView):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def _normaliza_rut(rut: str) -> str:
+    # muy básico; reemplaza con tu validador real si lo tienes
+    return rut.replace(".", "").replace("-", "").upper()
+
+def password_reset_sms_request(request):
+    """
+    Paso 1: el usuario pide código (por RUT/username/teléfono)
+    """
+    if request.method == "POST":
+        form = SMSRequestForm(request.POST)
+        if form.is_valid():
+            ident = form.cleaned_data["identificador"].strip()
+
+            # Buscar usuario por RUT, username o teléfono
+            user = None
+            # intenta RUT
+            try:
+                user = User.objects.get(rut=_normaliza_rut(ident))
+            except User.DoesNotExist:
+                # intenta username
+                try:
+                    user = User.objects.get(username__iexact=ident)
+                except User.DoesNotExist:
+                    # intenta teléfono
+                    try:
+                        user = User.objects.get(telefono=ident)
+                    except User.DoesNotExist:
+                        pass
+
+            if not user or not user.telefono:
+                messages.error(request, "No se encontró un usuario con esos datos o no tiene teléfono asociado.")
+                return redirect("password_reset_sms_request")
+
+            # Rate limit
+            ip = request.META.get("REMOTE_ADDR")
+            if not check_rate_limit(user.telefono, ip):
+                messages.error(request, "Has superado el límite de intentos. Intenta más tarde.")
+                return redirect("password_reset_sms_request")
+
+            # Crear OTP
+            reset_obj, code = crear_reset_sms(user)
+            # Enviar SMS
+            ok, err = send_sms(user.telefono, f"Tu código de recuperación es: {code}. Expira en 10 minutos.")
+            if not ok:
+                messages.error(request, f"No se pudo enviar el SMS: {err or 'Error desconocido'}")
+                return redirect("password_reset_sms_request")
+
+            # Guardar id en sesión para continuar a verificación
+            request.session["reset_sms_id"] = reset_obj.id
+            messages.success(request, f"Te enviamos un código al {user.telefono[-4:].rjust(len(user.telefono), '*')}.")
+            return redirect("password_reset_sms_verify")
+    else:
+        form = SMSRequestForm()
+
+    return render(request, "core/auth/password_reset_sms_request.html", {"form": form})
+
+
+def password_reset_sms_verify(request):
+    """
+    Paso 2: el usuario ingresa código y nueva contraseña
+    """
+    reset_id = request.session.get("reset_sms_id")
+    if not reset_id:
+        messages.error(request, "Sesión de recuperación no encontrada. Solicita un nuevo código.")
+        return redirect("password_reset_sms_request")
+
+    reset_obj = get_object_or_404(PasswordResetSMS, id=reset_id)
+
+    # Si expiró o ya fue usado
+    if reset_obj.used or reset_obj.is_expired():
+        messages.error(request, "El código expiró o ya fue utilizado. Solicita uno nuevo.")
+        request.session.pop("reset_sms_id", None)
+        return redirect("password_reset_sms_request")
+
+    if request.method == "POST":
+        form = SMSVerifyForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data["code"].strip()
+            if not reset_obj.can_attempt():
+                messages.error(request, "Se superó el número de intentos permitidos.")
+                request.session.pop("reset_sms_id", None)
+                return redirect("password_reset_sms_request")
+
+            if not verificar_otp(reset_obj, code):
+                remaining = max(reset_obj.max_intentos - reset_obj.intentos, 0)
+                messages.error(request, f"Código inválido. Intentos restantes: {remaining}")
+                return redirect("password_reset_sms_verify")
+
+            # OTP correcto: cambiar contraseña
+            user = reset_obj.user
+            user.set_password(form.cleaned_data["new_password1"])
+            user.save()
+
+            # Limpia sesión
+            request.session.pop("reset_sms_id", None)
+            messages.success(request, "Tu contraseña fue actualizada. Ahora puedes iniciar sesión.")
+            return redirect("web_login")
+    else:
+        form = SMSVerifyForm()
+
+    return render(request, "core/auth/password_reset_sms_verify.html", {"form": form})
 
 
 

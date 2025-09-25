@@ -60,4 +60,13 @@ urlpatterns = [
     #HISTORIAL DE TAREAS Y EVALUACIONES:
     path("tareas/<int:pk>/historial/", TareaHistorialView.as_view(), name="tarea_historial"),
     path("evaluaciones/<int:pk>/historial/", EvalHistorialView.as_view(), name="eval_historial"),
+
+    #PERFIL Y CAMBIO DE PASSWORD:
+    path("perfil/", PerfilView.as_view(), name="perfil"),
+    path("perfil/editar/", PerfilUpdateView.as_view(), name="perfil_editar"),
+    path("perfil/password/", MiPasswordChangeView.as_view(), name="perfil_password"),
+
+    #sms:
+    path("password/sms/", password_reset_sms_request, name="password_reset_sms_request"),
+    path("password/sms/verificar/", password_reset_sms_verify, name="password_reset_sms_verify"),
 ]

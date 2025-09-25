@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from .models import *
 from datetime import date
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 #REGISTRO GERENTE:
@@ -176,4 +177,83 @@ class EvaluacionForm(forms.ModelForm):
             raise forms.ValidationError("Solo puedes evaluar a usuarios con rol Trabajador.")
         if req_user and (not getattr(req_user, "rol", None) or req_user.rol.nombre != 'Supervisor') and not getattr(req_user, "is_superuser", False):
             raise forms.ValidationError("Solo Supervisores pueden crear evaluaciones.")
+        return cleaned
+    
+class PerfilForm(forms.ModelForm):
+
+    telefono = forms.CharField(
+        required=False,
+        help_text="Ej: +56912345678",
+        validators=[validate_e164]
+    )
+    
+    class Meta:
+        model = User
+        fields = [
+            "primer_nombre", "segundo_nombre",
+            "primer_apellido", "segundo_apellido",
+            "rut", "username", "email", "telefono",
+        ]
+
+    def clean_rut(self):
+        rut = (self.cleaned_data.get("rut") or "").strip()
+        # Normaliza/valida RUT si tienes util. Ejemplo básico:
+        rut = rut.replace(".", "").replace("-", "").upper()
+        if not rut.isalnum():
+            raise forms.ValidationError("RUT no válido.")
+        return rut    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class SMSRequestForm(forms.Form):
+    identificador = forms.CharField(
+        label="RUT, usuario o teléfono",
+        help_text="Ingresa tu RUT (con o sin puntos/guión), tu usuario o tu teléfono."
+    )
+
+    def clean_identificador(self):
+        v = (self.cleaned_data["identificador"] or "").strip()
+        if not v:
+            raise ValidationError("Campo requerido.")
+        return v
+
+
+class SMSVerifyForm(forms.Form):
+    code = forms.CharField(label="Código recibido por SMS", max_length=6)
+    new_password1 = forms.CharField(label="Nueva contraseña", widget=forms.PasswordInput)
+    new_password2 = forms.CharField(label="Repite la nueva contraseña", widget=forms.PasswordInput)
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get("new_password1")
+        p2 = cleaned.get("new_password2")
+        if p1 and p2 and p1 != p2:
+            self.add_error("new_password2", "Las contraseñas no coinciden.")
         return cleaned
