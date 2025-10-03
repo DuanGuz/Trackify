@@ -1,5 +1,7 @@
 from django.urls import path
 from .views import *
+from .api_views import *
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('', index, name="index"),
@@ -69,4 +71,13 @@ urlpatterns = [
     #sms:
     path("password/sms/", password_reset_sms_request, name="password_reset_sms_request"),
     path("password/sms/verificar/", password_reset_sms_verify, name="password_reset_sms_verify"),
+
+    # Auth JWT
+    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # Endpoints Trabajador
+    path("api/tareas/mias/", MisTareasAPI.as_view(), name="api_mis_tareas"),
+    path("api/tareas/<int:pk>/estado/", TareaEstadoAPI.as_view(), name="api_tarea_estado"),
+    path("api/evaluaciones/mias/", MisEvaluacionesAPI.as_view(), name="api_mis_evaluaciones"),
+    path("api/me/", MeAPI.as_view(), name="api_me"),
 ]

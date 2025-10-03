@@ -973,32 +973,3 @@ def password_reset_sms_verify(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-'''
-creo que esto es necesario para la app móvil
-# Iniciar y cerrar sesión )
-class LoginView(APIView):
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            serializer = UserSerializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-
-class LogoutView(APIView):
-    def post(self, request):
-        logout(request)
-        return Response({'message': 'Sesión cerrada correctamente'}, status=status.HTTP_200_OK)
-'''
