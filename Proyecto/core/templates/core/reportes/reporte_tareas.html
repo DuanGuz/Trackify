@@ -1,85 +1,192 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row">
+  <div class="col-12">
 
-<body>
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Reporte de Tareas</h5>
+      <span class="text-muted ml-3">Resultados: {{ tareas|length }}</span>
+      <div class="ml-auto d-flex">
+        <!-- Exportar conservando filtros -->
+        <a href="{% url 'reporte_tareas_pdf' %}?{{ request.GET.urlencode }}"
+          class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="fe fe-file-text mr-1"></i> Exportar PDF
+        </a>
+        <a href="{% url 'reporte_tareas_xlsx' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fe fe-download mr-1"></i> Exportar XLSX
+        </a>
+      </div>
+    </div>
+    <!-- KPIs por estado -->
+    <div class="row">
+      <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex align-items-center">
+            <i class="fe fe-clock mr-3"></i>
+            <div>
+              <div class="small text-muted">Pendientes</div>
+              <div class="h5 mb-0">{{ kpi_pend|default:"0" }}</div>
+              <div class="small text-muted">{{ kpi_pend_pct|default:"0"|floatformat:1 }}% de {{ kpi_total|default:"0" }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    {% block content %}
-    <h1>Reporte de Tareas</h1>
+      <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex align-items-center">
+            <i class="fe fe-activity mr-3"></i>
+            <div>
+              <div class="small text-muted">En progreso</div>
+              <div class="h5 mb-0">{{ kpi_prog|default:"0" }}</div>
+              <div class="small text-muted">{{ kpi_prog_pct|default:"0"|floatformat:1 }}% de {{ kpi_total|default:"0" }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <form method="get" style="margin-bottom:10px;">
-        <label>Estado:</label>
-        <select name="estado">
-            <option value="">--</option>
-            <option {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
-            <option {% if request.GET.estado == "En progreso" %}selected{% endif %}>En progreso</option>
-            <option {% if request.GET.estado == "Atrasada" %}selected{% endif %}>Atrasada</option>
-            <option {% if request.GET.estado == "Finalizada" %}selected{% endif %}>Finalizada</option>
-        </select>
+      <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex align-items-center">
+            <i class="fe fe-alert-triangle mr-3"></i>
+            <div>
+              <div class="small text-muted">Atrasadas</div>
+              <div class="h5 mb-0 text-danger">{{ kpi_atras|default:"0" }}</div>
+              <div class="small text-muted">{{ kpi_atras_pct|default:"0"|floatformat:1 }} % de {{ kpi_total|default:"0"}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <label>Depto:</label>
-        <select name="depto">
-            <option value="">--</option>
-            {% for d in departamentos %}
-            <option value="{{ d.id }}" {% if request.GET.depto == d.id|stringformat:"s" %}selected{% endif %}>
-                {{ d.nombre}}
-            </option>
-            {% endfor %}
-        </select>
+      <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex align-items-center">
+            <i class="fe fe-check-circle mr-3"></i>
+            <div>
+              <div class="small text-muted">Finalizadas</div>
+              <div class="h5 mb-0 text-success">{{ kpi_fin|default:"0" }}</div>
+              <div class="small text-muted">{{ kpi_fin_pct|default:"0"|floatformat:1 }}% de {{ kpi_total|default:"0" }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Filtros -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="get" class="mb-0">
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Estado</label>
+              <select name="estado" class="form-control">
+                <option value="">Todos</option>
+                <option value="Pendiente" {% if request.GET.estado == "Pendiente" %} selected {% endif %}>Pendiente</option>
+                <option value="En progreso" {% if request.GET.estado == "En progreso" %} selected {% endif %}>En progreso
+                </option>
+                <option value="Atrasada" {% if request.GET.estado == "Atrasada" %} selected {% endif %}>Atrasada</option>
+                <option value="Finalizada" {% if request.GET.estado == "Finalizada" %} selected {% endif %}>Finalizada
+                </option>
+              </select>
+            </div>
 
-        <label>Asignado:</label>
-        <select name="asignado">
-            <option value="">--</option>
-            {% for tr in trabajadores %}
-            <option value="{{ tr.id }}" {% if request.GET.asignado == tr.id|stringformat:"s" %}selected{% endif %}>{{
-                tr.primer_nombre }} {{ tr.primer_apellido }}</option>
-            {% endfor %}
-        </select>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Departamento</label>
+              <select name="depto" class="form-control">
+                <option value="">Todos</option>
+                {% for d in departamentos %}
+                <option value="{{ d.id }}" {% if request.GET.depto == d.id|stringformat:"s" %}selected{% endif %}>{{d.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <label>Desde:</label>
-        <input type="date" name="f_ini" value="{{ request.GET.f_ini }}">
-        <label>Hasta:</label>
-        <input type="date" name="f_fin" value="{{ request.GET.f_fin }}">
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Asignado</label>
+              <select name="asignado" class="form-control">
+                <option value="">Todos</option>
+                {% for tr in trabajadores %}
+                <option value="{{ tr.id }}" {% if request.GET.asignado == tr.id|stringformat:"s" %}selected{% endif %}>
+                  {{ tr.primer_nombre }} {{ tr.primer_apellido }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <button type="submit">Filtrar</button>
-        <a href="{% url 'reporte_tareas' %}">Limpiar</a>
-    </form>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Rango de fechas (vence)</label>
+              <div class="d-flex">
+                <input type="date" name="f_ini" class="form-control" value="{{ request.GET.f_ini }}">
+                <span class="mx-2 d-flex align-items-center">—</span>
+                <input type="date" name="f_fin" class="form-control" value="{{ request.GET.f_fin }}">
+              </div>
+            </div>
+          </div>
 
-    <p>
-        <a href="{% url 'reporte_tareas_pdf' %}?{{ request.GET.urlencode }}">Exportar PDF</a> |
-        <a href="{% url 'reporte_tareas_xlsx' %}?{{ request.GET.urlencode }}">Exportar XLSX</a>
-    </p>
+          <div class="d-flex justify-content-end">
+            {% if request.GET %}
+            <a href="{% url 'reporte_tareas' %}" class="btn btn-light mr-2">
+              <i class="fe fe-x"></i> Limpiar
+            </a>
+            {% endif %}
+            <button type="submit" class="btn btn-secondary">
+              <i class="fe fe-filter mr-1"></i> Filtrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
+    <!-- Tabla de resultados -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>Título</th>
+                <th>Departamento</th>
+                <th>Asignado</th>
+                <th>Estado</th>
+                <th>Vence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in tareas %}
+              <tr>
+                <td class="align-middle">{{ t.titulo }}</td>
+                <td class="align-middle text-muted">{{ t.departamento.nombre }}</td>
+                <td class="align-middle">{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
+                <td class="align-middle">
+                  {% if t.estado == "Pendiente" %}
+                  <span class="badge badge-warning text-dark">Pendiente</span>
+                  {% elif t.estado == "En progreso" %}
+                  <span class="badge badge-info">En progreso</span>
+                  {% elif t.estado == "Atrasada" %}
+                  <span class="badge badge-danger">Atrasada</span>
+                  {% elif t.estado == "Finalizada" %}
+                  <span class="badge badge-success">Finalizada</span>
+                  {% else %}
+                  <span class="badge badge-secondary">{{ t.estado }}</span>
+                  {% endif %}
+                </td>
+                <td class="align-middle">{{ t.fecha_limite|date:"d/m/Y" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">Sin resultados.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Título</th>
-            <th>Departamento</th>
-            <th>Asignado</th>
-            <th>Estado</th>
-            <th>Vence</th>
-        </tr>
-        {% for t in tareas %}
-        <tr>
-            <td>{{ t.titulo }}</td>
-            <td>{{ t.departamento.nombre }}</td>
-            <td>{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
-            <td>{{ t.estado }}</td>
-            <td>{{ t.fecha_limite|date:"Y-m-d" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">Sin resultados.</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endblock %}
-
-</body>
-
-</html>
+  </div>
+</div>
+{% endblock %}

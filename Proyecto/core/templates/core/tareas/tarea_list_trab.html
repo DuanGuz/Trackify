@@ -1,43 +1,119 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row">
+  <div class="col-12">
 
-<body>
-    {% block content %}
-    <h1>Mis tareas</h1>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Título</th>
-            <th>Depto</th>
-            <th>Estado</th>
-            <th>Vence</th>
-            <th>Acciones</th>
-        </tr>
-        {% for t in tareas %}
-        <tr>
-            <td><a href="{% url 'tarea_detail' t.pk %}">{{ t.titulo }}</a></td>
-            <td>{{ t.departamento.nombre }}</td>
-            <td>{{ t.estado }}</td>
-            <td>{{ t.fecha_limite|date:"d/m/Y" }}</td>
-            <td><a href="{% url 'tarea_estado' t.pk %}">Cambiar estado</a></td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No tienes tareas.</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Mis tareas</h5>
+      <span class="text-muted ml-3">Total: {{ tareas|length }}</span>
+    </div>
 
+    <!-- Filtros (opcionales) -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="get" class="mb-0">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label class="small text-muted mb-1">Buscar</label>
+              <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+                     placeholder="Buscar por título…">
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Estado</label>
+              <select name="estado" class="form-control">
+                <option value="">Todos</option>
+                <option value="Pendiente"   {% if request.GET.estado == "Pendiente" %}selected{% endif %}>Pendiente</option>
+                <option value="En progreso" {% if request.GET.estado == "En progreso" %}selected{% endif %}>En progreso</option>
+                <option value="Atrasada"    {% if request.GET.estado == "Atrasada" %}selected{% endif %}>Atrasada</option>
+                <option value="Finalizada"  {% if request.GET.estado == "Finalizada" %}selected{% endif %}>Finalizada</option>
+              </select>
+            </div>
+            <div class="form-group col-md-3 d-flex align-items-end">
+              <div class="ml-auto">
+                {% if request.GET %}
+                  <a href="{% url 'tarea_list_trab' %}" class="btn btn-light mr-2">
+                    <i class="fe fe-x"></i> Limpiar
+                  </a>
+                {% endif %}
+                <button type="submit" class="btn btn-secondary">
+                  <i class="fe fe-filter mr-1"></i> Filtrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
     {% if messages %}
-    <ul>{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} mb-3">{{ message }}</div>
+      {% endfor %}
     {% endif %}
-    {% endblock %}
 
-</body>
+    <!-- Tabla -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>Título</th>
+                <th>Departamento</th>
+                <th>Estado</th>
+                <th>Vence</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in tareas %}
+              <tr>
+                <td class="align-middle">
+                  <a href="{% url 'tarea_detail' t.pk %}" class="font-weight-500">{{ t.titulo }}</a>
+                </td>
+                <td class="align-middle text-muted">
+                  {{ t.departamento.nombre }}
+                </td>
+                <td class="align-middle">
+                  {% if t.estado == "Pendiente" %}
+                    <span class="badge badge-warning text-dark">Pendiente</span>
+                  {% elif t.estado == "En progreso" %}
+                    <span class="badge badge-info">En progreso</span>
+                  {% elif t.estado == "Atrasada" %}
+                    <span class="badge badge-danger">Atrasada</span>
+                  {% elif t.estado == "Finalizada" %}
+                    <span class="badge badge-success">Finalizada</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ t.estado }}</span>
+                  {% endif %}
+                </td>
+                <td class="align-middle">
+                  {{ t.fecha_limite|date:"d/m/Y" }}
+                  {% if t.estado != "Finalizada" and t.fecha_limite and t.fecha_limite|date:"Ymd" < today|date:"Ymd" %}
+                    <span class="badge badge-danger ml-1">Vencida</span>
+                  {% endif %}
+                </td>
+                <td class="align-middle text-right">
+                  <a href="{% url 'tarea_estado' t.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fe fe-check-square"></i> Cambiar estado
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">No tienes tareas.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-</html>
+  </div>
+</div>
+{% endblock %}

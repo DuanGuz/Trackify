@@ -1,25 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6 col-md-8">
 
-<body>
-    {% load crispy_forms_tags %}
-    {% block content %}
-    <h2>Cambiar estado</h2>
-    <p><strong>Tarea:</strong> {{ object.titulo }}</p>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }} {# o |crispy #}
-        <button type="submit">Actualizar</button>
-        <a href="{% url 'tarea_list_trab' %}">Cancelar</a>
-    </form>
-    {% endblock %}
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">
+        <i class="fe fe-check-square mr-1"></i> Cambiar estado
+      </h5>
+      <a href="{% url 'tarea_list_trab' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver
+      </a>
+    </div>
 
-</body>
+    <!-- Info de la tarea -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <p class="mb-1 text-muted small">Tarea</p>
+        <h6 class="mb-0">{{ object.titulo }}</h6>
 
-</html>
+        <div class="mt-2">
+          <span class="text-muted small">Departamento:</span>
+          {{ object.departamento.nombre }} <br>
+          <span class="text-muted small">Fecha límite:</span>
+          {{ object.fecha_limite|date:"d/m/Y" }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de cambio de estado -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form|crispy }}
+
+          <div class="d-flex justify-content-end mt-4">
+            <a href="{% url 'tarea_list_trab' %}" class="btn btn-light mr-2">
+              <i class="fe fe-x"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fe fe-save mr-1"></i> Actualizar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

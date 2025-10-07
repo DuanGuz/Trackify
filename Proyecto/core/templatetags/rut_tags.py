@@ -6,3 +6,4 @@ register = template.Library()
 @register.filter
 def rut(value):
     return format_rut(value or "")
+

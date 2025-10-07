@@ -1,32 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row justify-content-center"> {# Centra horizontalmente el contenido #}
+    <div class="col-12 col-md-10 col-lg-8 col-xl-6"> {# Controla el ancho máximo #}
 
-<body>
-    {% load crispy_forms_tags %}
-    {% block content %}
-    <h2>{% if form.instance.pk %}Editar usuario{% else %}Crear usuario (RRHH){% endif %}</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form|crispy }} {# o {{ form.as_p }} si no usas crispy #}
-        <button type="submit">Guardar</button>
-        <a href="{% url 'user_list' %}">Cancelar</a>
-    </form>
+        <!-- Título + volver -->
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="mb-0">
+                {% if form.instance.pk %}
+                Editar usuario
+                {% else %}
+                Crear usuario (RRHH)
+                {% endif %}
+            </h5>
+            <a href="{% url 'user_list' %}" class="btn btn-light btn-sm ml-auto">
+                <i class="fe fe-arrow-left mr-1"></i> Volver al listado
+            </a>
+        </div>
 
-    {% if messages %}
-    <ul style="margin-top:1rem;">
+        <!-- Mensajes flash -->
+        {% if messages %}
         {% for message in messages %}
-        <li>{{ message }}</li>
+        <div class="alert alert-{{ message.tags|default:'info' }} mb-3">{{ message }}</div>
         {% endfor %}
-    </ul>
-    {% endif %}
-    {% endblock %}
+        {% endif %}
 
-</body>
+        <!-- Errores globales -->
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger mb-3">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
 
-</html>
+        <!-- Tarjeta del formulario -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <form method="post" action="">
+                    {% csrf_token %}
+
+                    {% if form|crispy %}
+                    {{ form|crispy }}
+                    {% else %}
+                    {{ form.as_p }}
+                    {% endif %}
+
+                    <div class="d-flex mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fe fe-save mr-1"></i> Guardar
+                        </button>
+                        <a href="{% url 'user_list' %}" class="btn btn-outline-secondary ml-2">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

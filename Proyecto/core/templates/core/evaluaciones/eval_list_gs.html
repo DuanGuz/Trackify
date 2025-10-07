@@ -1,73 +1,265 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row">
+  <div class="col-12">
 
-<body>
-    {% block content %}
-    <h1>Evaluaciones</h1>
+    <!-- Encabezado + CTA -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Evaluaciones</h5>
+      {% if request.user.is_superuser or request.user.rol.nombre == "Supervisor" %}
+        <a href="{% url 'eval_create' %}" class="btn btn-primary btn-sm ml-auto">
+          <i class="fe fe-plus mr-1"></i> Nueva evaluación
+        </a>
+      {% endif %}
+    </div>
 
-    <form method="get" style="margin:10px 0;">
-        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Buscar trabajador/supervisor...">
-        <button type="submit">Buscar</button>
-        <a href="{% url 'eval_list_gs' %}">Limpiar</a>
+    <!-- KPIs -->
+    <div class="row">
+      <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex align-items-center">
+            <i class="fe fe-star mr-3"></i>
+            <div>
+              <div class="small text-muted">Promedio puntual</div>
+              <div class="h5 mb-0">
+                {% if kpi_promedio %}{{ kpi_promedio|floatformat:1 }} / 5{% else %}—{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6 col-xl-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body d-flex align-items-center">
+            <i class="fe fe-file-text mr-3"></i>
+            <div>
+              <div class="small text-muted">Total evaluaciones</div>
+              <div class="h5 mb-0">{{ kpi_total|default:"0" }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- deja espacio para futuros KPIs si quieres -->
+    </div>
+
+    <!-- Filtros avanzados -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="get" class="mb-0">
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Buscar</label>
+              <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+                     placeholder="Trabajador o supervisor…">
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Supervisor</label>
+              <select name="supervisor" class="form-control">
+                <option value="">Todos</option>
+                {% for s in supervisores %}
+                  <option value="{{ s.id }}" {% if request.GET.supervisor == s.id|stringformat:"s" %}selected{% endif %}>
+                    {{ s.primer_apellido }} {{ s.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Trabajador</label>
+              <select name="trabajador" class="form-control">
+                <option value="">Todos</option>
+                {% for t in trabajadores %}
+                  <option value="{{ t.id }}" {% if request.GET.trabajador == t.id|stringformat:"s" %}selected{% endif %}>
+                    {{ t.primer_apellido }} {{ t.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Puntaje mínimo</label>
+              <select name="puntaje_min" class="form-control">
+                <option value="">Todos</option>
+                {% for n in "12345" %}
+                  <option value="{{ forloop.counter }}" {% if request.GET.puntaje_min == forloop.counter|stringformat:"s" %}selected{% endif %}>
+                    {{ forloop.counter }}+
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Desde</label>
+              <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
+            </div>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Hasta</label>
+              <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
+            </div>
+            <div class="form-group col-md-6 d-flex align-items-end justify-content-end">
+              {% if request.GET %}
+                <a href="{% url 'eval_list_gs' %}" class="btn btn-light mr-2">
+                  <i class="fe fe-x"></i> Limpiar
+                </a>
+              {% endif %}
+              <button class="btn btn-secondary" type="submit">
+                <i class="fe fe-filter"></i> Filtrar
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>Trabajador</th>
+                <th>Supervisor</th>
+                <th>Puntaje</th>
+                <th>Fecha</th>
+                <th>Comentarios</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in evaluaciones %}
+              <tr>
+                <td class="align-middle">
+                  {{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}
+                </td>
+                <td class="align-middle">
+                  {{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}
+                </td>
+                <td class="align-middle">
+                  <span class="badge badge-pill {% if e.puntaje >= 4 %}badge-success{% elif e.puntaje == 3 %}badge-warning text-dark{% else %}badge-danger{% endif %}">
+                    {{ e.puntaje }} / 5
+                  </span>
+                </td>
+                <td class="align-middle">{{ e.created_at|date:"d/m/Y H:i" }}</td>
+                <td class="align-middle text-muted">
+                  {{ e.comentarios|default:"—" }}
+                </td>
+                <td class="align-middle text-right">
+                  {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" %}
+                    <a href="{% url 'eval_update' e.pk %}" class="btn btn-sm btn-outline-primary">
+                      <i class="fe fe-edit"></i> Editar
+                    </a>
+                    <a href="#" class="btn btn-sm btn-outline-danger js-delete-eval"
+                       data-url="{% url 'eval_delete' e.pk %}"
+                       data-label="{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}">
+                      <i class="fe fe-trash-2"></i> Eliminar
+                    </a>
+                    <a href="{% url 'eval_historial' e.pk %}" class="btn btn-sm btn-outline-secondary">
+                      <i class="fe fe-clock"></i> Historial
+                    </a>
+                  {% elif request.user.rol.nombre == "Supervisor" and e.supervisor_id == request.user.id %}
+                    <a href="{% url 'eval_update' e.pk %}" class="btn btn-sm btn-outline-primary">
+                      <i class="fe fe-edit"></i> Editar
+                    </a>
+                    <a href="#" class="btn btn-sm btn-outline-danger js-delete-eval"
+                       data-url="{% url 'eval_delete' e.pk %}"
+                       data-label="{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}">
+                      <i class="fe fe-trash-2"></i> Eliminar
+                    </a>
+                    <a href="{% url 'eval_historial' e.pk %}" class="btn btn-sm btn-outline-secondary">
+                      <i class="fe fe-clock"></i> Historial
+                    </a>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">Sin evaluaciones.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Paginación (preserva filtros) -->
+      {% if is_paginated %}
+      <div class="card-footer d-flex align-items-center justify-content-between">
+        <div>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
+        <nav>
+          <ul class="pagination mb-0">
+            {% with params=request.GET.urlencode %}
+              {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link"
+                     href="?{% if params %}{{ params }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                     aria-label="Anterior"><span aria-hidden="true">&laquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+              {% endif %}
+
+              <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+
+              {% if page_obj.has_next %}
+                <li class="page-item">
+                  <a class="page-link"
+                     href="?{% if params %}{{ params }}&{% endif %}page={{ page_obj.next_page_number }}"
+                     aria-label="Siguiente"><span aria-hidden="true">&raquo;</span></a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+              {% endif %}
+            {% endwith %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Form oculto para POST de eliminación -->
+    <form id="delete-eval-form" method="post" style="display:none;">
+      {% csrf_token %}
     </form>
 
-    {% if request.user.rol.nombre == "Supervisor" or request.user.is_superuser %}
-    <p><a href="{% url 'eval_create' %}">➕ Nueva evaluación</a></p>
-    {% endif %}
+  </div>
+</div>
+{% endblock %}
 
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Trabajador</th>
-            <th>Supervisor</th>
-            <th>Puntaje</th>
-            <th>Fecha</th>
-            <th>Comentarios</th>
-            <th>Acciones</th>
-        </tr>
-        {% for e in evaluaciones %}
-        <tr>
-            <td>{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}</td>
-            <td>{{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}</td>
-            <td>{{ e.puntaje }}</td>
-            <td>{{ e.created_at|date:"d/m/Y H:i" }}</td>
-            <td>{{ e.comentarios|default:"—" }}</td>
-            <td>
-                {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" or request.user.rol.nombre == "Supervisor" and e.supervisor_id == request.user.id %}
-                    <a href="{% url 'eval_update' e.pk %}">Editar</a> |
-                    <a href="{% url 'eval_delete' e.pk %}">Eliminar</a>|
-                    <a href="{% url 'eval_historial' e.pk %}">Historial</a>
-                {% else %}
-                — 
-                {% endif %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6">Sin evaluaciones.</td>
-        </tr>
-        {% endfor %}
-    </table>
+{% block js %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    (function() {
+      document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.js-delete-eval');
+        if (!btn) return;
+        e.preventDefault();
 
+        const url = btn.getAttribute('data-url');
+        const label = btn.getAttribute('data-label') || 'esta evaluación';
 
-    {% if is_paginated %}
-    <div style="margin-top:10px;">
-        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
-        <span>Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
-    </div>
-    {% endif %}
-
-    {% if messages %}
-    <ul>{% for m in messages %}<li>{{ m }}</li>{% endfor %}</ul>
-    {% endif %}
-    {% endblock %}
-
-</body>
-
-</html>
+        Swal.fire({
+          title: '¿Eliminar evaluación?',
+          html: 'Vas a eliminar la evaluación de <strong>' + label + '</strong>.<br>Esta acción no se puede deshacer.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sí, eliminar',
+          cancelButtonText: 'Cancelar',
+          reverseButtons: true,
+          confirmButtonColor: '#e55353'
+        }).then(function(result) {
+          if (result.isConfirmed) {
+            const form = document.getElementById('delete-eval-form');
+            form.setAttribute('action', url);
+            form.submit();
+          }
+        });
+      }, false);
+    })();
+  </script>
+{% endblock %}

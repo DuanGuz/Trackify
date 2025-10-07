@@ -1,106 +1,179 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row">
+  <div class="col-12">
 
-<body>
-    {% block content %}
-    <h1>Reporte de Evaluaciones</h1>
+    <!-- Encabezado + Exportar -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Reporte de Evaluaciones</h5>
+      <span class="text-muted ml-3">Resultados: {{ evaluaciones|length }}</span>
+      <div class="ml-auto d-flex">
+        <a href="{% url 'reporte_evals_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="fe fe-file-text mr-1"></i> Exportar PDF
+        </a>
+        <a href="{% url 'reporte_evals_xlsx' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fe fe-download mr-1"></i> Exportar XLSX
+        </a>
+      </div>
+    </div>
 
-    <form method="get" style="margin-bottom:10px;">
-        <label>Trabajador:</label>
-        <select name="trabajador">
-            <option value="">--</option>
-            {% for tr in trabajadores %}
-            <option value="{{ tr.id }}" {% if request.GET.trabajador == tr.id|stringformat:"s" %}selected{% endif %}>{{
-                tr.primer_nombre }} {{ tr.primer_apellido }}</option>
-            {% endfor %}
-        </select>
+    <!-- Filtros -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <form method="get" class="mb-0">
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Trabajador</label>
+              <select name="trabajador" class="form-control">
+                <option value="">Todos</option>
+                {% for tr in trabajadores %}
+                  <option value="{{ tr.id }}" {% if request.GET.trabajador == tr.id|stringformat:"s" %}selected{% endif %}>
+                    {{ tr.primer_apellido }} {{ tr.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <label>Supervisor:</label>
-        <select name="supervisor">
-            <option value="">--</option>
-            {% for sp in supervisores %}
-            <option value="{{ sp.id }}" {% if request.GET.supervisor == sp.id|stringformat:"s" %}selected{% endif %}>{{
-                sp.primer_nombre }} {{ sp.primer_apellido }}</option>
-            {% endfor %}
-        </select>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Supervisor</label>
+              <select name="supervisor" class="form-control">
+                <option value="">Todos</option>
+                {% for sp in supervisores %}
+                  <option value="{{ sp.id }}" {% if request.GET.supervisor == sp.id|stringformat:"s" %}selected{% endif %}>
+                    {{ sp.primer_apellido }} {{ sp.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <label>Puntaje:</label>
-        <select name="puntaje">
-            <option value="">--</option>
-            {% for p in "12345" %}
-            <option value="{{ forloop.counter }}" 
-            {% if request.GET.puntaje == forloop.counter|stringformat:"s" %} selected {% endif %}>
-                {{ forloop.counter }}
-            </option>
-            {% endfor %}
-        </select>
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Puntaje</label>
+              <select name="puntaje" class="form-control">
+                <option value="">Todos</option>
+                {% for p in "12345" %}
+                  <option value="{{ forloop.counter }}" {% if request.GET.puntaje == forloop.counter|stringformat:"s" %}selected{% endif %}>
+                    {{ forloop.counter }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
 
-        <label>Desde:</label>
-        <input type="date" name="f_ini" value="{{ request.GET.f_ini }}">
-        <label>Hasta:</label>
-        <input type="date" name="f_fin" value="{{ request.GET.f_fin }}">
+            <div class="form-group col-md-4">
+              <label class="small text-muted mb-1">Rango de fechas (creación)</label>
+              <div class="d-flex">
+                <input type="date" name="f_ini" class="form-control" value="{{ request.GET.f_ini }}">
+                <span class="mx-2 d-flex align-items-center">—</span>
+                <input type="date" name="f_fin" class="form-control" value="{{ request.GET.f_fin }}">
+              </div>
+            </div>
+          </div>
 
-        <button type="submit">Filtrar</button>
-        <a href="{% url 'reporte_evaluaciones' %}">Limpiar</a>
-    </form>
+          <div class="d-flex justify-content-end">
+            {% if request.GET %}
+              <a href="{% url 'reporte_evaluaciones' %}" class="btn btn-light mr-2">
+                <i class="fe fe-x"></i> Limpiar
+              </a>
+            {% endif %}
+            <button type="submit" class="btn btn-secondary">
+              <i class="fe fe-filter mr-1"></i> Filtrar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
-    <p>
-        <a href="{% url 'reporte_evals_pdf' %}?{{ request.GET.urlencode }}">Exportar PDF</a> |
-        <a href="{% url 'reporte_evals_xlsx' %}?{{ request.GET.urlencode }}">Exportar XLSX</a>
-    </p>
+    <!-- Detalle -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <strong>Detalle</strong>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>Trabajador</th>
+                <th>Supervisor</th>
+                <th>Puntaje</th>
+                <th>Fecha</th>
+                <th>Comentarios</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in evaluaciones %}
+              <tr>
+                <td class="align-middle">
+                  {{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}
+                </td>
+                <td class="align-middle">
+                  {{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}
+                </td>
+                <td class="align-middle">
+                  <span class="badge badge-pill
+                    {% if e.puntaje >= 4 %}badge-success
+                    {% elif e.puntaje == 3 %}badge-warning text-dark
+                    {% else %}badge-danger{% endif %}">
+                    {{ e.puntaje }} / 5
+                  </span>
+                </td>
+                <td class="align-middle">{{ e.created_at|date:"d/m/Y H:i" }}</td>
+                <td class="align-middle text-muted">{{ e.comentarios|default:"—" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">Sin resultados.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
+    <!-- Resumen (promedio por trabajador) -->
+    <div class="card">
+      <div class="card-header">
+        <strong>Resumen (promedio por trabajador)</strong>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th>Trabajador</th>
+                <th>Promedio</th>
+                <th class="text-right"># Eval</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in resumen_trabajadores %}
+              <tr>
+                <td class="align-middle">
+                  {{ r.trabajador__primer_nombre }} {{ r.trabajador__primer_apellido }}
+                </td>
+                <td class="align-middle">
+                  <span class="badge badge-pill
+                    {% if r.prom|floatformat:1 >= 4 %}badge-success
+                    {% elif r.prom|floatformat:1 == '3.0' or r.prom|floatformat:1 == '3.1' or r.prom|floatformat:1 == '3.2' or r.prom|floatformat:1 == '3.3' or r.prom|floatformat:1 == '3.4' or r.prom|floatformat:1 == '3.5' or r.prom|floatformat:1 == '3.6' or r.prom|floatformat:1 == '3.7' or r.prom|floatformat:1 == '3.8' or r.prom|floatformat:1 == '3.9' %}badge-warning text-dark
+                    {% else %}badge-danger{% endif %}">
+                    {{ r.prom|floatformat:2 }}
+                  </span>
+                </td>
+                <td class="align-middle text-right">{{ r.total }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted py-4">Sin datos.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    <h3>Detalle</h3>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Trabajador</th>
-            <th>Supervisor</th>
-            <th>Puntaje</th>
-            <th>Fecha</th>
-            <th>Comentarios</th>
-        </tr>
-        {% for e in evaluaciones %}
-        <tr>
-            <td>{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}</td>
-            <td>{{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}</td>
-            <td>{{ e.puntaje }}</td>
-            <td>{{ e.created_at|date:"Y-m-d H:i" }}</td>
-            <td>{{ e.comentarios|default:"—" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">Sin resultados.</td>
-        </tr>
-        {% endfor %}
-    </table>
-
-    <h3>Resumen (promedio por trabajador)</h3>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Trabajador</th>
-            <th>Promedio</th>
-            <th># Eval</th>
-        </tr>
-        {% for r in resumen_trabajadores %}
-        <tr>
-            <td>{{ r.trabajador__primer_nombre }} {{ r.trabajador__primer_apellido }}</td>
-            <td>{{ r.prom|floatformat:2 }}</td>
-            <td>{{ r.total }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="3">Sin datos.</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% endblock %}
-
-</body>
-
-</html>
+  </div>
+</div>
+{% endblock %}

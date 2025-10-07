@@ -1,48 +1,86 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-10 col-lg-8 col-xl-6">
 
-<body>
+    <!-- Título -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Mi Perfil</h5>
+      <a href="{% url 'home' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver al inicio
+      </a>
+    </div>
+    
 
-    {% block content %}
-    <h2>Mi Perfil</h2>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Usuario</th>
-            <td>{{ usuario.username }}</td>
-        </tr>
-        <tr>
-            <th>Nombre</th>
-            <td>{{ usuario.primer_nombre }} {{ usuario.segundo_nombre }}</td>
-        </tr>
-        <tr>
-            <th>Apellidos</th>
-            <td>{{ usuario.primer_apellido }} {{ usuario.segundo_apellido }}</td>
-        </tr>
-        <tr>
-            <th>RUT</th>
-            <td>{{ usuario.rut }}</td>
-        </tr>
-        <tr>
-            <th>Email</th>
-            <td>{{ usuario.email }}</td>
-        </tr>
-        <tr>
-            <th>Rol</th>
-            <td>{{ usuario.rol.nombre|default:"(sin rol)" }}</td>
-        </tr>
-    </table>
+    <!-- Mensajes -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} mb-3">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
 
-    <p style="margin-top:10px;">
-        <a href="{% url 'perfil_editar' %}">Editar perfil</a> |
-        <a href="{% url 'perfil_password' %}">Cambiar contraseña</a>
-    </p>
-    {% endblock %}
-</body>
+    <!-- Card principal -->
+    <div class="card shadow-sm">
+      <div class="card-body">
 
-</html>
+        <!-- Info usuario -->
+        <table class="table table-borderless mb-0">
+          <tbody>
+            <tr>
+              <th class="text-muted" style="width: 30%;">Usuario</th>
+              <td>{{ usuario.username }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted">Nombre</th>
+              <td>{{ usuario.primer_nombre }} {{ usuario.segundo_nombre }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted">Apellidos</th>
+              <td>{{ usuario.primer_apellido }} {{ usuario.segundo_apellido }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted">RUT</th>
+              <td>{{ usuario.rut }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted">Email</th>
+              <td>{{ usuario.email }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted">Rol</th>
+              <td>
+                {% if usuario.rol %}
+                  {% if usuario.rol.nombre == "Recursos humanos" %}
+                    <span class="badge badge-danger">Recursos Humanos</span>
+                  {% elif usuario.rol.nombre == "Supervisor" %}
+                    <span class="badge badge-warning text-dark">Supervisor</span>
+                  {% elif usuario.rol.nombre == "Trabajador" %}
+                    <span class="badge badge-success">Trabajador</span>
+                  {% elif usuario.rol.nombre == "Gerente" %}
+                    <span class="badge badge-info">Gerente</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ usuario.rol.nombre }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="text-muted">(sin rol)</span>
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Acciones -->
+        <div class="mt-4 d-flex justify-content-end">
+          <a href="{% url 'perfil_password' %}" class="btn btn-outline-secondary">
+            <i class="fe fe-lock mr-1"></i> Cambiar contraseña
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

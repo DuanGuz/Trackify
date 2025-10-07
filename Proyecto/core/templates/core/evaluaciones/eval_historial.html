@@ -1,32 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-{% block content %}
-<h2>Historial de Evaluación #{{ evaluacion.pk }}</h2>
-<table border="1" cellpadding="6">
-  <tr>
-    <th>Fecha</th><th>Acción</th><th>Campo</th><th>Anterior</th><th>Nuevo</th><th>Por</th>
-  </tr>
-  {% for h in eventos %}
-  <tr>
-    <td>{{ h.created_at|date:"Y-m-d H:i" }}</td>
-    <td>{{ h.get_accion_display }}</td>
-    <td>{{ h.campo|default:"—" }}</td>
-    <td>{{ h.valor_anterior|default:"—" }}</td>
-    <td>{{ h.valor_nuevo|default:"—" }}</td>
-    <td>{% if h.realizado_por %}{{ h.realizado_por.primer_nombre }} {{ h.realizado_por.primer_apellido }}{% else %}—{% endif %}</td>
-  </tr>
-  {% empty %}
-  <tr><td colspan="6">Sin eventos.</td></tr>
-  {% endfor %}
-</table>
-<p><a href="{% url 'eval_list_gs' %}">Volver</a></p>
-{% endblock %}
+{% extends "core/base.html" %}
+{% load static %}
 
-</body>
-</html>
+{% block content %}
+<div class="row">
+  <div class="col-12 col-xl-10 mx-auto">
+
+    <!-- Encabezado + volver -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Historial de Evaluación #{{ evaluacion.pk }}</h5>
+      <a href="{% url 'eval_list_gs' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver a evaluaciones
+      </a>
+    </div>
+
+    <!-- Datos breves de la evaluación (opcional) -->
+    <div class="card mb-3">
+      <div class="card-body d-flex flex-wrap">
+        <div class="mr-4 mb-2">
+          <div class="small text-muted">Trabajador</div>
+          <div>{{ evaluacion.trabajador.primer_nombre }} {{ evaluacion.trabajador.primer_apellido }}</div>
+        </div>
+        <div class="mr-4 mb-2">
+          <div class="small text-muted">Supervisor</div>
+          <div>{{ evaluacion.supervisor.primer_nombre }} {{ evaluacion.supervisor.primer_apellido }}</div>
+        </div>
+        <div class="mr-4 mb-2">
+          <div class="small text-muted">Puntaje</div>
+          <div>
+            <span class="badge badge-pill {% if evaluacion.puntaje >= 4 %}badge-success{% elif evaluacion.puntaje == 3 %}badge-warning text-dark{% else %}badge-danger{% endif %}">
+              {{ evaluacion.puntaje }} / 5
+            </span>
+          </div>
+        </div>
+        <div class="mb-2">
+          <div class="small text-muted">Creada</div>
+          <div>{{ evaluacion.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla historial -->
+    <div class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr>
+                <th style="width: 160px;">Fecha</th>
+                <th style="width: 160px;">Acción</th>
+                <th style="width: 180px;">Campo</th>
+                <th>Anterior</th>
+                <th>Nuevo</th>
+                <th style="width: 220px;" class="text-right">Por</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in eventos %}
+              <tr>
+                <td class="align-middle">{{ h.created_at|date:"d/m/Y H:i" }}</td>
+                <td class="align-middle">
+                  {% if h.accion == "CREADA" %}
+                    <span class="badge badge-success">Creada</span>
+                  {% elif h.accion == "ACTUALIZADA" %}
+                    <span class="badge badge-info">Actualizada</span>
+                  {% elif h.accion == "ESTADO" %}
+                    <span class="badge badge-warning text-dark">Cambio de estado</span>
+                  {% elif h.accion == "ELIMINADA" %}
+                    <span class="badge badge-danger">Eliminada</span>
+                  {% else %}
+                    <span class="badge badge-secondary">{{ h.get_accion_display }}</span>
+                  {% endif %}
+                </td>
+                <td class="align-middle text-muted">{{ h.campo|default:"—" }}</td>
+                <td class="align-middle">
+                  <div class="text-monospace small" style="white-space: pre-wrap;">{{ h.valor_anterior|default:"—" }}</div>
+                </td>
+                <td class="align-middle">
+                  <div class="text-monospace small" style="white-space: pre-wrap;">{{ h.valor_nuevo|default:"—" }}</div>
+                </td>
+                <td class="align-middle text-right">
+                  {% if h.realizado_por %}
+                    {{ h.realizado_por.primer_nombre }} {{ h.realizado_por.primer_apellido }}
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">Sin eventos.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

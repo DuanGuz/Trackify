@@ -1,18 +1,26 @@
 {% extends "core/reportes/pdf_base.html" %}
 
 {% block content_table %}
-<tr>
-  <th>Título</th><th>Departamento</th><th>Asignado</th><th>Estado</th><th>Vence</th>
-</tr>
-{% for t in tareas %}
-<tr>
-  <td>{{ t.titulo }}</td>
-  <td>{{ t.departamento.nombre }}</td>
-  <td>{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
-  <td>{{ t.estado }}</td>
-  <td>{{ t.fecha_limite|date:"Y-m-d" }}</td>
-</tr>
-{% empty %}
-<tr><td colspan="5">Sin resultados.</td></tr>
-{% endfor %}
+<thead>
+  <tr>
+    <th>Título</th>
+    <th>Departamento</th>
+    <th>Asignado</th>
+    <th>Estado</th>
+    <th>Vence</th>
+  </tr>
+</thead>
+<tbody>
+  {% for t in tareas %}
+  <tr>
+    <td>{{ t.titulo }}</td>
+    <td>{{ t.departamento.nombre }}</td>
+    <td>{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
+    <td>{{ t.estado }}</td>
+    <td>{{ t.fecha_limite|date:"d/m/Y" }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5" class="text-center">Sin resultados.</td></tr>
+  {% endfor %}
+</tbody>
 {% endblock %}

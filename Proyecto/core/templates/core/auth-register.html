@@ -1,0 +1,105 @@
+{% load static %}
+{% load form_tags %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="favicon.ico">
+    <title>Tiny Dashboard - A Bootstrap Dashboard Template</title>
+    <!-- Simple bar CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/simplebar.css' %}">
+    <!-- Fonts CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <!-- Icons CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/feather.css' %}">
+    <!-- Date Range Picker CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/daterangepicker.css' %}">
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/app-light.css' %}" id="lightTheme">
+    <link rel="stylesheet" href="{% static 'core/css/app-dark.css' %}" id="darkTheme" disabled>
+  </head>
+  <body class="light">
+    <div class="wrapper vh-100">
+      <div class="row align-items-center h-100">
+        <form class="col-lg-6 col-md-8 col-10 mx-auto" method="post">
+          {% csrf_token %}
+          <div class="mx-auto text-center my-4">
+            <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="{% url 'index' %}">
+              <img src="{% static 'core/img/logo.png' %}" alt="Logo Trackify" class="" style="height: 200px; width: 200px;">
+            </a>
+            <h2 class="my-3">Registro</h2>
+          </div>
+
+          {% for field in form %}
+            {% if field.errors %}
+              {% for error in field.errors %}
+                <div class="alert alert-danger">{{ error }}</div>
+              {% endfor %}
+            {% endif %}
+
+            <div class="form-group">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field|addclass:"form-control" }}
+              {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+              {% endif %}
+            </div>
+          {% endfor %}
+
+          {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+              <div class="alert alert-danger">{{ error }}</div>
+            {% endfor %}
+          {% endif %}
+
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <p class="mb-2">Requisitos de contraseña</p>
+              <ul class="small text-muted pl-4 mb-0">
+                <li>Mínimo 8 caracteres</li>
+                <li>Al menos una letra mayúscula</li>
+                <li>Al menos un número</li>
+                <li>Al menos un carácter especial</li>
+              </ul>
+            </div>
+          </div>
+
+          <button class="btn btn-lg btn-primary btn-block" type="submit">Registrarse</button>
+          
+          <p class="mt-3 text-center">
+            <a href="{% url 'web_login' %}" class="text-muted">Ya tengo cuenta</a>
+          </p>
+          
+          <p class="mt-5 mb-3 text-muted text-center">© 2025 Trackify</p>
+        </form>
+      </div>
+    </div>
+    <script src="{% static 'core/js/jquery.min.js' %}"></script>
+    <script src="{% static 'core/js/popper.min.js' %}"></script>
+    <script src="{% static 'core/js/moment.min.js' %}"></script>
+    <script src="{% static 'core/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'core/js/simplebar.min.js' %}"></script>
+    <script src="{% static 'core/js/daterangepicker.js' %}"></script>
+    <script src="{% static 'core/js/jquery.stickOnScroll.js' %}"></script>
+    <script src="{% static 'core/js/tinycolor-min.js' %}"></script>
+    <script src="{% static 'core/js/config.js' %}"></script>
+    <script src="{% static 'core/js/apps.js' %}"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-56159088-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag()
+      {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
+      gtag('config', 'UA-56159088-1');
+    </script>
+  </body>
+</html>
+</body>
+</html>

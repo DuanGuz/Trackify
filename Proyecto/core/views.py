@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout, get_user_model, update_session_auth_hash
 from .serializers import UserSerializer
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -14,7 +14,7 @@ from .utils import *
 from django.db.models import Q, Count, Avg
 from .mixins import *
 from django.http import HttpResponse
-from django.utils.timezone import now
+from django.utils.timezone import now, make_naive, localtime
 from datetime import datetime
 import csv
 try:
@@ -29,41 +29,60 @@ from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
 from .utils_sms import *
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+
 
 User = get_user_model()
 
 # Create your views here.
 def index(request):
-	return render(request, 'core/index.html')
+	return render(request, 'core/a/index.html')
 
 def base(request):
     return render(request, 'core/base.html')
 
 def auth_confirm(request):
-    return render(request, 'core/auth-confirm.html')
+    return render(request, 'core/a/auth-confirm.html')
 
 def profile(request):
-    return render(request, 'core/profile.html')
+    return render(request, 'core/a/profile.html')
 
 
 
 
 
 #LOGIN/REGISTRO WEB
-def registro_gerente(request):
+
+#Pruebas:
+def registro_web(request):
     if request.method == 'POST':
-        form = RegistroGerenteForm(request.POST)
+        form = RegistroRRHHForm(request.POST)
         if form.is_valid():
             form.save()
             return redirect('web_login')
     else:
-        form = RegistroGerenteForm()
+        form = RegistroRRHHForm()
+    return render(request, 'core/auth-register.html', {'form': form})
+
+def registro_gerente(request):
+    if request.method == 'POST':
+        form = RegistroRRHHForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('web_login')
+    else:
+        form = RegistroRRHHForm()
     return render(request, 'core/registro_gerente.html', {'form': form})
 
-# Login web
+# Login web (Listo)
 def web_login(request):
     if request.user.is_authenticated:
-        return redirect('user_list')
+        return redirect('home')
 
     error = None
     if request.method == 'POST':
@@ -72,16 +91,16 @@ def web_login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('user_list')
+            return redirect('home')
         else:
             error = "Usuario o contraseña incorrectos"
-    return render(request, 'core/pruebalogin.html', {'error': error})
+    return render(request, 'core/auth-login.html', {'error': error})
 
 # Logout web
 def web_logout(request):
     if request.method == 'POST':
         logout(request)
-        return redirect('baseprueba')
+        return redirect('web_login')
     return redirect('indexprueba')
 
 # Index prueba (requiere login)
@@ -176,9 +195,15 @@ class DepartamentoListView(SoloRRHHMixin, ListView):
     context_object_name = "departamentos"
     paginate_by = 15
     ordering = ['nombre']
-    
+
     def get_queryset(self):
-        qs = super().get_queryset().annotate(total_tareas=Count('tasks'))
+        qs = (super()
+              .get_queryset()
+              .annotate(
+                  total_tareas=Count('tasks', distinct=True),
+                  total_personas=Count('tasks__asignado', distinct=True),  # ← NUEVO
+              ))
+
         q = self.request.GET.get('q', '').strip()
         if q:
             qs = qs.filter(Q(nombre__icontains=q) | Q(descripcion__icontains=q))
@@ -411,20 +436,66 @@ class EvalListGSView(SoloGerenteSupervisorMixin, ListView):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        qs = super().get_queryset().select_related('trabajador','supervisor')
-        q = self.request.GET.get("q","").strip()
+        qs = super().get_queryset().select_related('trabajador', 'supervisor')
+        q = self.request.GET.get("q", "").strip()
+        puntaje_min = self.request.GET.get("puntaje_min") or ""
+        supervisor_id = self.request.GET.get("supervisor") or ""
+        trabajador_id = self.request.GET.get("trabajador") or ""
+        f_desde = self.request.GET.get("desde") or ""
+        f_hasta = self.request.GET.get("hasta") or ""
+
+        # Filtro general
         if q:
             qs = qs.filter(
-                Q(trabajador__primer_nombre__icontains=q) |
-                Q(trabajador__primer_apellido__icontains=q) |
-                Q(supervisor__primer_nombre__icontains=q) |
-                Q(supervisor__primer_apellido__icontains=q)
+                Q(trabajador__primer_nombre__icontains=q)
+                | Q(trabajador__primer_apellido__icontains=q)
+                | Q(supervisor__primer_nombre__icontains=q)
+                | Q(supervisor__primer_apellido__icontains=q)
             )
-        # Si es Supervisor (no gerente), por defecto ver solo las que él creó (a menos que quieras mostrar todas)
+
+        # Filtros avanzados
+        if puntaje_min:
+            try:
+                qs = qs.filter(puntaje__gte=int(puntaje_min))
+            except ValueError:
+                pass
+
+        if supervisor_id:
+            qs = qs.filter(supervisor_id=supervisor_id)
+
+        if trabajador_id:
+            qs = qs.filter(trabajador_id=trabajador_id)
+
+        if f_desde:
+            qs = qs.filter(created_at__date__gte=f_desde)
+        if f_hasta:
+            qs = qs.filter(created_at__date__lte=f_hasta)
+
+        # Restricción de visibilidad para Supervisores
         u = self.request.user
         if u.rol and u.rol.nombre == 'Supervisor' and not u.is_superuser:
             qs = qs.filter(supervisor=u)
+
         return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs = self.get_queryset()
+
+        # KPIs
+        agg = qs.aggregate(
+            promedio=Avg("puntaje"),
+            total=Count("id"),
+        )
+
+        # Listas para selects
+        ctx["supervisores"] = User.objects.filter(rol__nombre="Supervisor").order_by("primer_apellido", "primer_nombre")
+        ctx["trabajadores"] = User.objects.filter(rol__nombre="Trabajador").order_by("primer_apellido", "primer_nombre")
+
+        ctx["kpi_promedio"] = agg["promedio"]
+        ctx["kpi_total"] = agg["total"]
+
+        return ctx
 
 # Listado para Trabajador: solo las mías
 class EvalListTrabajadorView(SoloTrabajadorMixin, ListView):
@@ -435,7 +506,18 @@ class EvalListTrabajadorView(SoloTrabajadorMixin, ListView):
     ordering = ['-created_at']
 
     def get_queryset(self):
-        return Evaluacion.objects.filter(trabajador=self.request.user).select_related('supervisor')
+        return (Evaluacion.objects
+                .filter(trabajador=self.request.user)
+                .select_related('supervisor')
+                .order_by(*self.ordering))
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        qs_all = Evaluacion.objects.filter(trabajador=self.request.user)
+        agg = qs_all.aggregate(promedio=Avg("puntaje"), total=Count("id"))
+        ctx["kpi_promedio"] = agg["promedio"]
+        ctx["kpi_total"] = agg["total"]
+        return ctx
 
 # Crear evaluación (solo Supervisor)
 class EvalCreateView(SoloSupervisorMixin, CreateView):
@@ -537,48 +619,86 @@ class DashboardView(SoloGerenteSupervisorMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        # Usuarios por rol
-        usuarios_por_rol = (User.objects
-                            .values("rol__nombre")
-                            .annotate(total=Count("id"))
-                            .order_by("rol__nombre"))
+        # ===== Usuarios por rol =====
+        usuarios_por_rol_qs = (
+            User.objects
+            .values("rol__nombre")
+            .annotate(total=Count("id"))
+            .order_by("rol__nombre")
+        )
+        usuarios_por_rol = []
+        for r in usuarios_por_rol_qs:
+            nombre = r["rol__nombre"] or "(Sin rol)"
+            usuarios_por_rol.append({"rol__nombre": nombre, "total": r["total"]})
 
-        # Tareas por estado
-        tareas_por_estado = (Tarea.objects
-                             .values("estado")
-                             .annotate(total=Count("id"))
-                             .order_by("estado"))
+        # ===== Tareas por estado =====
+        tareas_por_estado = (
+            Tarea.objects
+            .values("estado")
+            .annotate(total=Count("id"))
+            .order_by("estado")
+        )
 
-        # Tareas atrasadas
-        atrasadas = Tarea.objects.filter(estado__in=["Pendiente","En progreso"], fecha_limite__lt=now().date()).count()
+        # ===== Tareas atrasadas =====
+        atrasadas = Tarea.objects.filter(
+            estado__in=["Pendiente", "En progreso"],
+            fecha_limite__lt=now().date()
+        ).count()
 
-        # Tareas por departamento
-        tareas_por_depto = (Tarea.objects
-                            .values("departamento__nombre")
-                            .annotate(total=Count("id"))
-                            .order_by("departamento__nombre"))
+        # ===== Tareas por departamento =====
+        tareas_por_depto_qs = (
+            Tarea.objects
+            .values("departamento__nombre")
+            .annotate(total=Count("id"))
+            .order_by("departamento__nombre")
+        )
+        tareas_por_depto = []
+        for d in tareas_por_depto_qs:
+            nombre = d["departamento__nombre"] or "(Sin departamento)"
+            tareas_por_depto.append({"departamento__nombre": nombre, "total": d["total"]})
 
-        # Promedio de evaluaciones por trabajador (top 10)
-        top_trabajadores = (Evaluacion.objects
-                            .values("trabajador__id","trabajador__primer_nombre","trabajador__primer_apellido")
-                            .annotate(prom=Avg("puntaje"), total=Count("id"))
-                            .order_by("-prom")[:10])
+        # ===== Tareas por estado por departamento (stacked) =====
+        tareas_por_depto_estado_qs = (
+            Tarea.objects
+            .values("departamento__nombre")
+            .annotate(
+                pend=Count("id", filter=Q(estado="Pendiente")),
+                prog=Count("id", filter=Q(estado="En progreso")),
+                atras=Count("id", filter=Q(estado="Atrasada")),
+                fin=Count("id", filter=Q(estado="Finalizada")),
+            )
+            .order_by("departamento__nombre")
+        )
+        tareas_por_depto_estado = []
+        for r in tareas_por_depto_estado_qs:
+            nombre = r["departamento__nombre"] or "(Sin departamento)"
+            tareas_por_depto_estado.append({
+                "departamento__nombre": nombre,
+                "pend": r["pend"],
+                "prog": r["prog"],
+                "atras": r["atras"],
+                "fin": r["fin"],
+            })
 
-        # Promedio por departamento (si trabajador tiene FK a depto en tu modelo; si no, omítelo)
-        # Suponiendo que Tarea vincula depto y queremos promedio por depto del asignado (aprox.)
-        # Si no aplica a tu modelo, comenta este bloque.
-        # prom_por_depto = (EvaluacionDesempeno.objects
-        #                   .values("trabajador__departamento__nombre")
-        #                   .annotate(prom=Avg("puntaje"))
-        #                   .order_by("-prom"))
+        # ===== Top 10 trabajadores =====
+        top_trabajadores = (
+            Evaluacion.objects
+            .values("trabajador__id", "trabajador__primer_nombre", "trabajador__primer_apellido")
+            .annotate(
+                prom=Coalesce(Avg("puntaje"), 0.0),
+                total=Count("id"),
+            )
+            .order_by("-prom", "-total")[:10]
+        )
 
+        # ===== Contexto final =====
         ctx.update({
             "usuarios_por_rol": usuarios_por_rol,
             "tareas_por_estado": tareas_por_estado,
             "tareas_atrasadas": atrasadas,
             "tareas_por_depto": tareas_por_depto,
+            "tareas_por_depto_estado": tareas_por_depto_estado,
             "top_trabajadores": top_trabajadores,
-            # "prom_por_depto": prom_por_depto,
         })
         return ctx
 
@@ -639,10 +759,41 @@ class ReporteTareasView(SoloGerenteSupervisorMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        qs = filtrar_tareas(self.request).order_by("fecha_limite","estado")
+        qs = filtrar_tareas(self.request).order_by("fecha_limite", "estado")
         ctx["tareas"] = qs
         ctx["departamentos"] = Departamento.objects.all().order_by("nombre")
-        ctx["trabajadores"] = User.objects.filter(rol__nombre="Trabajador").order_by("primer_apellido","primer_nombre")
+        ctx["trabajadores"] = User.objects.filter(
+            rol__nombre="Trabajador"
+        ).order_by("primer_apellido", "primer_nombre")
+
+        agg = qs.aggregate(
+            total=Count("id"),
+            pend=Count("id", filter=Q(estado="Pendiente")),
+            prog=Count("id", filter=Q(estado="En progreso")),
+            atras=Count("id", filter=Q(estado="Atrasada")),
+            fin=Count("id", filter=Q(estado="Finalizada")),
+        )
+        total = agg.get("total") or 0
+
+        def pct(n):
+            return round((n * 100.0 / total), 1) if total else 0.0
+
+        pend = agg.get("pend") or 0
+        prog = agg.get("prog") or 0
+        atras = agg.get("atras") or 0
+        fin = agg.get("fin") or 0
+
+        ctx.update({
+            "kpi_total": total,
+            "kpi_pend": pend,
+            "kpi_prog": prog,
+            "kpi_atras": atras,
+            "kpi_fin": fin,
+            "kpi_pend_pct": pct(pend),
+            "kpi_prog_pct": pct(prog),
+            "kpi_atras_pct": pct(atras),
+            "kpi_fin_pct": pct(fin),
+        })
         return ctx
 
 def exportar_tareas_csv(request):
@@ -820,14 +971,36 @@ class PerfilUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class MiPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
-    template_name = "core/perfil/password_change.html"
+    template_name = "core/perfil/password_change.html"  # tu template
     success_url = reverse_lazy("perfil")
+    form_class = PerfilSetPasswordForm  # ← clave: usamos SetPasswordForm personalizado
+
+    def get_form_kwargs(self):
+        # PasswordChangeView ya inyecta user, pero lo explicitamos
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
+        # Guardar nueva contraseña SIN pedir la antigua
+        user = form.save()
+        # Mantener la sesión activa después del cambio
+        update_session_auth_hash(self.request, user)
         messages.success(self.request, "Contraseña actualizada.")
         return super().form_valid(form)
 
+@login_required
+def home(request):
+    ctx = {}
+    if getattr(request.user, "is_superuser", False) or getattr(getattr(request.user,"rol",None), "nombre", "") == "Recursos humanos":
+        ctx["usuarios_count"] = User.objects.count()
+        ctx["departamentos_count"] = Departamento.objects.count()
 
+    ctx["tareas_pendientes_count"] = Tarea.objects.filter(asignado=request.user).exclude(estado="completada").count()
+    ctx["mis_tareas"] = (Tarea.objects
+                         .filter(asignado=request.user)
+                         .order_by("fecha_limite")[:10])
+    return render(request, "core/home.html", ctx)
 
 
 
@@ -955,10 +1128,47 @@ def password_reset_sms_verify(request):
 
     return render(request, "core/auth/password_reset_sms_verify.html", {"form": form})
 
+#Notificaciones:
+@login_required
+def notif_list_api(request):
+    """
+    Devuelve las notificaciones del usuario logueado.
+    """
+    qs = (Notificacion.objects
+          .filter(usuario=request.user)
+          .order_by('-created_at')[:100])
+
+    data = []
+    unread = 0
+    for n in qs:
+        if not n.is_read:
+            unread += 1
+        data.append({
+            "id": n.id,
+            "mensaje": n.mensaje,
+            "is_read": n.is_read,
+            "created_at": localtime(n.created_at).strftime("%d/%m/%Y %H:%M"),
+        })
+    return JsonResponse({"items": data, "unread_count": unread})
+
+@login_required
+@require_POST
+def notif_clear_api(request):
+    """
+    Marca como leídas todas las notificaciones del usuario.
+    """
+    Notificacion.objects.filter(usuario=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({"ok": True})
 
 
-
-
+@login_required
+@require_POST
+def notif_delete_all_api(request):
+    """
+    Elimina todas las notificaciones del usuario.
+    """
+    Notificacion.objects.filter(usuario=request.user).delete()
+    return JsonResponse({"ok": True})
 
 
 

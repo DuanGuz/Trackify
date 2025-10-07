@@ -4,16 +4,18 @@ from .api_views import *
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
-    path('', index, name="index"),
+    path("", home, name="home"),
     path('base/', base, name="base"),
     path('auth-confirm/', auth_confirm, name="auth_confirm"),
     path('profile/', profile, name="profile"),
 
     #PRUEBA LOGIN WEB
-    path('login/', web_login, name='web_login'),
+    path('login/', web_login, name='web_login'), #LISTO
     path('logout/', web_logout, name='web_logout'),
     path('indexprueba/', indexprueba, name='indexprueba'),
     path('baseprueba/', baseprueba, name='baseprueba'),
+
+    path('registro-web/', registro_web, name='registro_web'), 
     path('registro/', registro_gerente, name='registro'),
 
     #CRUD USUARIOS(RRHH):
@@ -80,4 +82,9 @@ urlpatterns = [
     path("api/tareas/<int:pk>/estado/", TareaEstadoAPI.as_view(), name="api_tarea_estado"),
     path("api/evaluaciones/mias/", MisEvaluacionesAPI.as_view(), name="api_mis_evaluaciones"),
     path("api/me/", MeAPI.as_view(), name="api_me"),
+
+    #Notifiaciones
+    path("notificaciones/", notif_list_api, name="notif_list_api"),
+    path("notificaciones/clear/", notif_clear_api, name="notif_clear_api"),
+    path("notificaciones/delete_all/", notif_delete_all_api, name="notif_delete_all_api"),
 ]

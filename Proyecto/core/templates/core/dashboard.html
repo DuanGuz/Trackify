@@ -1,99 +1,379 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
+{% load l10n %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-
-<body>
-    <h1>Dashboard</h1>
-
-    <div style="max-width: 680px; margin: 1rem 0;">
-        <h3>Tareas por estado</h3>
-        <canvas id="chartTareasEstado" height="140"></canvas>
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">Dashboard</h5>
     </div>
 
-    <div style="max-width: 680px; margin: 1rem 0;">
-        <h3>Tareas por departamento</h3>
-        <canvas id="chartTareasDepto" height="140"></canvas>
+    <!-- ====== FILA 1: Gráficos ====== -->
+    <div class="row">
+      <!-- Tareas por estado -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-pie-chart mr-2"></i><strong>Tareas por estado</strong>
+            <span class="ml-auto small text-muted">Atrasadas: {{ tareas_atrasadas|default:"0" }}</span>
+          </div>
+          <div class="card-body">
+            <div style="height: 260px;">
+              <canvas id="chartTareasEstado"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tareas por departamento -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-bar-chart-2 mr-2"></i><strong>Tareas por departamento</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 260px;">
+              <canvas id="chartTareasDepto"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <h1>Dashboard</h1>
 
-    <h3>Usuarios por rol</h3>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Rol</th>
-            <th>Total</th>
-        </tr>
-        {% for r in usuarios_por_rol %}
-        <tr>
-            <td>{{ r.rol__nombre|default:"(Sin rol)" }}</td>
-            <td>{{ r.total }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="2">Sin datos</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <!-- ====== FILA 2: Gráficos ====== -->
+    <div class="row">
+      <!-- Usuarios por rol -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-users mr-2"></i><strong>Usuarios por rol</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 260px;">
+              <canvas id="chartUsuariosRol"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <h3>Tareas por estado (Atrasadas: {{ tareas_atrasadas }})</h3>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Estado</th>
-            <th>Total</th>
-        </tr>
-        {% for t in tareas_por_estado %}
-        <tr>
-            <td>{{ t.estado }}</td>
-            <td>{{ t.total }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="2">Sin datos</td>
-        </tr>
-        {% endfor %}
-    </table>
+      <!-- Top 10 trabajadores por promedio -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-award mr-2"></i><strong>Top 10 trabajadores por promedio</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 260px;">
+              <canvas id="chartTopPromedio"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <h3>Tareas por departamento</h3>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Departamento</th>
-            <th>Total</th>
-        </tr>
-        {% for d in tareas_por_depto %}
-        <tr>
-            <td>{{ d.departamento__nombre }}</td>
-            <td>{{ d.total }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="2">Sin datos</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <!-- ====== FILA 3 (opcional): Tareas por estado por departamento (barras múltiples) ====== -->
+    {% if tareas_por_depto_estado %}
+    <div class="row">
+      <div class="col-12 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-layers mr-2"></i><strong>Tareas por estado por departamento</strong>
+            <span class="ml-auto small text-muted">Barras múltiples</span>
+          </div>
+          <div class="card-body">
+            <div style="height: 320px;">
+              <canvas id="chartEstadoPorDepto"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
-    <h3>Top 10 trabajadores por promedio</h3>
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Trabajador</th>
-            <th>Promedio</th>
-            <th>Evaluaciones</th>
-        </tr>
-        {% for t in top_trabajadores %}
-        <tr>
-            <td>{{ t.trabajador__primer_nombre }} {{ t.trabajador__primer_apellido }}</td>
-            <td>{{ t.prom|floatformat:2 }}</td>
-            <td>{{ t.total }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="3">Sin datos</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
+    <!-- ====== TABLAS ====== -->
+    <div class="card mb-3">
+      <div class="card-header"><strong>Usuarios por rol</strong></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr><th>Rol</th><th class="text-right">Total</th></tr>
+            </thead>
+            <tbody>
+              {% for r in usuarios_por_rol %}
+                <tr>
+                  <td class="align-middle">{{ r.rol__nombre|default:"(Sin rol)" }}</td>
+                  <td class="align-middle text-right">{{ r.total }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-</html>
+    <div class="card mb-3">
+      <div class="card-header"><strong>Tareas por estado</strong></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr><th>Estado</th><th class="text-right">Total</th></tr>
+            </thead>
+            <tbody>
+              {% for t in tareas_por_estado %}
+                <tr>
+                  <td class="align-middle">{{ t.estado }}</td>
+                  <td class="align-middle text-right">{{ t.total }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><strong>Tareas por departamento</strong></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr><th>Departamento</th><th class="text-right">Total</th></tr>
+            </thead>
+            <tbody>
+              {% for d in tareas_por_depto %}
+                <tr>
+                  <td class="align-middle">{{ d.departamento__nombre }}</td>
+                  <td class="align-middle text-right">{{ d.total }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-1">
+      <div class="card-header"><strong>Top 10 trabajadores por promedio</strong></div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="thead-light">
+              <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Evaluaciones</th></tr>
+            </thead>
+            <tbody>
+              {% for t in top_trabajadores %}
+                <tr>
+                  <td class="align-middle">{{ t.trabajador__primer_nombre }} {{ t.trabajador__primer_apellido }}</td>
+                  <td class="align-middle">
+                    <span class="badge badge-pill
+                      {% if t.prom >= 4 %}badge-success
+                      {% elif t.prom >= 3 %}badge-warning text-dark
+                      {% else %}badge-danger{% endif %}">
+                      {{ t.prom|floatformat:2 }}
+                    </span>
+                  </td>
+                  <td class="align-middle text-right">{{ t.total }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block js %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+
+  <script>
+  (function () {
+    // ==== DATOS ====
+    var EST_labels = [{% for t in tareas_por_estado %}"{{ t.estado|default:'(sin estado)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+    var EST_data   = [{% for t in tareas_por_estado %}{{ t.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    var DEP_labels = [{% for d in tareas_por_depto %}"{{ d.departamento__nombre|default:'(Sin depto)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+    var DEP_data   = [{% for d in tareas_por_depto %}{{ d.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    var ROL_labels = [{% for r in usuarios_por_rol %}"{{ r.rol__nombre|default:'(Sin rol)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+    var ROL_data   = [{% for r in usuarios_por_rol %}{{ r.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+    // TOP: forzamos número JS con punto y 2 decimales
+    var TOP_labels = [
+      {% for x in top_trabajadores %}
+        "{{ x.trabajador__primer_nombre|default:''|add:' '|add:x.trabajador__primer_apellido|default:''|escapejs }}"
+        {% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+    var TOP_prom = [
+      {% for x in top_trabajadores %}
+        {{ x.prom|default_if_none:0|stringformat:"0.2f" }}
+        {% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+    var TOP_total = [
+      {% for x in top_trabajadores %}
+        {{ x.total|default_if_none:0 }}
+        {% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    // Datos para Barras múltiples (estado por departamento)
+    var DEPE_STACK_labels = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}"{{ r.departamento__nombre|default:'(Sin depto)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
+    var DEPE_STACK_pend   = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.pend|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
+    var DEPE_STACK_prog   = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.prog|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
+    var DEPE_STACK_atras  = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.atras|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
+    var DEPE_STACK_fin    = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.fin|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
+
+    var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+
+    function colorByEstado(label) {
+      switch ((label || '').toLowerCase()) {
+        case 'pendiente': return '#edc948';
+        case 'en progreso': return '#4e79a7';
+        case 'atrasada': return '#e15759';
+        case 'finalizada': return '#59a14f';
+        default: return '#bab0ab';
+      }
+    }
+
+    // Helper: ticks enteros (sólo para el eje numérico)
+    function integerTicks() {
+      return {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          callback: function(value) {
+            return Number.isInteger(value) ? value : null;
+          }
+        }
+      }
+    }
+
+    // ===== Gráfico: Tareas por estado (doughnut)
+    var ce = document.getElementById('chartTareasEstado');
+    if (ce && EST_labels.length) {
+      new Chart(ce.getContext('2d'), {
+        type: 'doughnut',
+        data: { labels: EST_labels, datasets: [{ data: EST_data, backgroundColor: EST_labels.map(colorByEstado) }] },
+        options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false }
+      });
+    }
+
+    // ===== Gráfico: Tareas por departamento (bar) — enteros en eje numérico
+    var cd = document.getElementById('chartTareasDepto');
+    if (cd && DEP_labels.length) {
+      var horizontal = DEP_labels.length > 6;
+      new Chart(cd.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: DEP_labels,
+          datasets: [{ data: DEP_data, backgroundColor: DEP_labels.map((_, i) => palette[i % palette.length]) }]
+        },
+        options: {
+          indexAxis: horizontal ? 'y' : 'x',
+          plugins: { legend: { display: false } },
+          scales: horizontal
+            ? { x: integerTicks(), y: { type: 'category' } }
+            : { x: { type: 'category' }, y: integerTicks() },
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // ===== Gráfico: Usuarios por rol (bar) — enteros en eje numérico
+    var cr = document.getElementById('chartUsuariosRol');
+    if (cr && ROL_labels.length) {
+      new Chart(cr.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: ROL_labels,
+          datasets: [{ data: ROL_data, backgroundColor: ROL_labels.map((_, i) => palette[i % palette.length]) }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { x: { type: 'category' }, y: integerTicks() },
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // ===== Gráfico: Top 10 por promedio (horizontal)
+    var ct = document.getElementById('chartTopPromedio');
+    if (ct && TOP_labels.length) {
+      new Chart(ct.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: TOP_labels,
+          datasets: [{
+            label: 'Promedio',
+            data: TOP_prom,
+            backgroundColor: TOP_labels.map((_, i) => palette[i % palette.length])
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          scales: {
+            x: { beginAtZero: true, suggestedMax: 5 },
+            y: { type: 'category' }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var i = ctx.dataIndex;
+                  var val = Number(ctx.raw) || 0;
+                  var cnt = (TOP_total && TOP_total[i] != null) ? TOP_total[i] : '-';
+                  return 'Promedio: ' + val.toFixed(2) + ' · #Eval: ' + cnt;
+                }
+              }
+            }
+          },
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // ===== Barras múltiples: Estado por departamento — NO apilado
+    var cs = document.getElementById('chartEstadoPorDepto');
+    if (cs && DEPE_STACK_labels && DEPE_STACK_labels.length) {
+      new Chart(cs.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: DEPE_STACK_labels,
+          datasets: [
+            { label: 'Pendiente',   data: DEPE_STACK_pend,  backgroundColor: '#edc948' },
+            { label: 'En progreso', data: DEPE_STACK_prog,  backgroundColor: '#4e79a7' },
+            { label: 'Atrasada',    data: DEPE_STACK_atras, backgroundColor: '#e15759' },
+            { label: 'Finalizada',  data: DEPE_STACK_fin,   backgroundColor: '#59a14f' }
+          ]
+        },
+        options: {
+          plugins: { legend: { position: 'bottom' } },
+          responsive: true,
+          scales: {
+            x: { type: 'category' }, // categorías (departamentos)
+            y: integerTicks()        // eje numérico en enteros
+          },
+          maintainAspectRatio: false
+        }
+      });
+    }
+  })();
+  </script>
+{% endblock %}

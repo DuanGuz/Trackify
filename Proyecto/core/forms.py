@@ -1,24 +1,38 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, SetPasswordForm
 from django.contrib.auth import get_user_model
 from .models import *
 from datetime import date
 from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import password_validators_help_text_html
+from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
 #REGISTRO GERENTE:
-class RegistroGerenteForm(UserCreationForm):
+class RegistroRRHHForm(UserCreationForm):
     email = forms.EmailField(required=True)
+    username = forms.CharField(
+        label='Nombre de usuario',
+        help_text='Requerido. 150 caracteres como máximo. Letras, dígitos y @/./+/-/_ solamente.',
+        max_length=150
+    )
 
     class Meta:
         model = User
         fields = ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'rut', 
                   'username', 'email', 'password1', 'password2']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Removemos los mensajes de ayuda en inglés
+        self.fields['password1'].help_text = ''
+        self.fields['password2'].help_text = ''
+        self.fields['username'].help_text = 'Requerido. 150 caracteres como máximo. Letras, dígitos y @/./+/-/_ solamente.'
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        rol_gerente, created = Rol.objects.get_or_create(nombre='Gerente')
-        user.rol = rol_gerente
+        rol_rrhh, created = Rol.objects.get_or_create(nombre='Recursos humanos')
+        user.rol = rol_rrhh
         if commit:
             user.save()
         return user
@@ -79,6 +93,7 @@ class UserUpdateForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+    
 
 class DepartamentoForm(forms.ModelForm):
     class Meta:
@@ -145,8 +160,6 @@ class TareaEstadoForm(forms.ModelForm):
             if texto and user is not None:
                 Comentario.objects.create(tarea=tarea, usuario=user, contenido=texto)
         return tarea
-    
-
 
 class EvaluacionForm(forms.ModelForm):
     puntaje = forms.IntegerField(min_value=1, max_value=5, label="Puntaje (1-5)")
@@ -203,35 +216,6 @@ class PerfilForm(forms.ModelForm):
             raise forms.ValidationError("RUT no válido.")
         return rut    
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class SMSRequestForm(forms.Form):
     identificador = forms.CharField(
         label="RUT, usuario o teléfono",
@@ -257,3 +241,16 @@ class SMSVerifyForm(forms.Form):
         if p1 and p2 and p1 != p2:
             self.add_error("new_password2", "Las contraseñas no coinciden.")
         return cleaned
+    
+class PerfilSetPasswordForm(SetPasswordForm):
+    # No old_password aquí
+    new_password1 = forms.CharField(
+        label=_("Nueva contraseña"),
+        help_text=password_validators_help_text_html(),  # reglas (se muestran en español si LANGUAGE_CODE='es')
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password", "class": "form-control"}),
+    )
+    new_password2 = forms.CharField(
+        label=_("Confirmar nueva contraseña"),
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password", "class": "form-control"}),
+    )
+    

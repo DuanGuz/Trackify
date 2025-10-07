@@ -52,6 +52,7 @@ X_FRAME_OPTIONS='SAMEORIGIN'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -72,6 +73,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.i18n",
+                "core.context_processors.notifications_context",
             ],
         },
     },
@@ -113,7 +116,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGES = [
+    ("es", "Español"),
+    ("en", "English"),
+]
+
 
 TIME_ZONE = "UTC"
 
@@ -141,13 +148,14 @@ REST_FRAMEWORK = {
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+LOGIN_REDIRECT_URL = "home"
 
 
 # --- SMS Settings (Twilio) ---
 SMS_BACKEND = "twilio"  # << activar envío real
-TWILIO_ACCOUNT_SID   = "AC4f9113b575761e6c8caa23d68514778b"
-TWILIO_AUTH_TOKEN    = "98db68fe83b2703e36cbd293a38d168c"
-TWILIO_FROM_NUMBER   = "+18079091832"   # tu número de Twilio en formato E.164
+TWILIO_ACCOUNT_SID   = "ACb4d8aae8b6551e231a371f7651dc0532"
+TWILIO_AUTH_TOKEN    = "bb841b3008c9d7283000aa58ee19005b"
+TWILIO_FROM_NUMBER   = "+18254623871"   # tu número de Twilio en formato E.164
 # (opcional) si usas Messaging Service:
 #TWILIO_MESSAGING_SERVICE_SID = os.getenv("TWILIO_MESSAGING_SERVICE_SID", "")
 
