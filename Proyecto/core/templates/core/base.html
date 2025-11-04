@@ -139,6 +139,81 @@
 
               <ul class="collapse list-unstyled pl-4 w-100" id="tareas">
                 <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'tarea_list_supervisor_mias' %}">
+                    <span class="ml-1 item-text">Mis tareas</span>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'tarea_list_supervisor_equipo' %}">
+                    <span class="ml-1 item-text">Equipo</span>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'tarea_create' %}">
+                    <span class="ml-1 item-text">Agregar tareas</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <ul class="navbar-nav flex-fill w-100 mb-2">
+            <li class="nav-item dropdown">
+              <a href="#evaluacion" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                <i class="fe fe-user fe-16"></i>
+                <span class="ml-3 item-text">Evaluaciones</span><span class="sr-only">(current)</span>
+              </a>
+
+              <ul class="collapse list-unstyled pl-4 w-100" id="evaluacion">
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'eval_list_gs' %}"><span
+                      class="ml-1 item-text">Evaluaciones</span></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'eval_create' %}"><span class="ml-1 item-text">Añadir
+                      evaluación</span></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'eval_list_mias' %}"><span class="ml-1 item-text">Mis evaluaciones</span></a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <ul class="navbar-nav flex-fill w-100 mb-2">
+            <li class="nav-item dropdown">
+              <a href="#reportes" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                <i class="fe fe-clipboard fe-16"></i>
+                <span class="ml-3 item-text">Reportes</span><span class="sr-only">(current)</span>
+              </a>
+
+              <ul class="collapse list-unstyled pl-4 w-100" id="reportes">
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'reporte_tareas' %}"><span class="ml-1 item-text">Reportes
+                      tareas</span></a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link pl-3" href="{% url 'reporte_evaluaciones' %}"><span class="ml-1 item-text">Reportes
+                      evaluacion</span></a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <li class="nav-item w-100">
+            <a class="nav-link" href="{% url 'dashboard' %}">
+              <i class="fe fe-bar-chart-2 fe-16"></i>
+              <span class="ml-3 item-text">Dashboard</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" %}
+          <ul class="navbar-nav flex-fill w-100 mb-2">
+            <li class="nav-item dropdown">
+              <a href="#tareas" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle nav-link">
+                <i class="fe fe-list fe-16"></i>
+                <span class="ml-3 item-text">tareas</span><span class="sr-only">(current)</span>
+              </a>
+
+              <ul class="collapse list-unstyled pl-4 w-100" id="tareas">
+                <li class="nav-item">
                   <a class="nav-link pl-3" href="{% url 'tarea_list_gs' %}"><span
                       class="ml-1 item-text">Tareas</span></a>
                 </li>
@@ -205,7 +280,7 @@
           </ul>
           <ul class="navbar-nav flex-fill w-100 mb-2">
             <li class="nav-item w-100">
-              <a class="nav-link" href="{% url 'eval_list_trab' %}">
+              <a class="nav-link" href="{% url 'eval_list_mias' %}">
                 <i class="fe fe-award fe-16"></i>
                 <span class="ml-3 item-text">Mis evaluaciones</span>
               </a>

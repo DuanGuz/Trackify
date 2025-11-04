@@ -1,24 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "core/base.html" %}
+{% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-md-9">
 
-<body>
-    {% block content %}
-    <h2>Eliminar evaluación</h2>
-    <p>¿Seguro que deseas eliminar la evaluación de <strong>{{ object.trabajador.primer_nombre }} 
-        {{ object.trabajador.primer_apellido }}</strong> (puntaje {{ object.puntaje }})?</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Sí, eliminar</button>
-        <a href="{% url 'eval_list_gs' %}">Cancelar</a>
-    </form>
-    {% endblock %}
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-3"><i class="fe fe-trash-2 mr-1"></i> Eliminar evaluación</h5>
 
-</body>
+        <p class="mb-1"><strong>Evaluado:</strong>
+          {{ object.evaluado.primer_nombre }} {{ object.evaluado.primer_apellido }} ({{ object.evaluado.rol.nombre }})
+        </p>
+        <p class="mb-1"><strong>Evaluador:</strong>
+          {{ object.evaluador.primer_nombre }} {{ object.evaluador.primer_apellido }} ({{ object.evaluador.rol.nombre }})
+        </p>
+        <p class="mb-1"><strong>Tipo:</strong> {{ object.get_tipo_display }}</p>
+        <p class="mb-1"><strong>Puntaje:</strong> {{ object.puntaje }}</p>
+        <p class="mb-3"><strong>Comentarios:</strong> {{ object.comentarios|default:"—" }}</p>
 
-</html>
+        <div class="alert alert-warning">
+          ¿Confirmas que deseas eliminar esta evaluación? Esta acción no se puede deshacer.
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex justify-content-end">
+            <a href="{% url 'eval_list_gs' %}" class="btn btn-light mr-2">
+              <i class="fe fe-arrow-left mr-1"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-danger">
+              <i class="fe fe-trash-2 mr-1"></i> Eliminar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -2,21 +2,22 @@ from django.urls import path
 from .views import *
 from .api_views import *
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views_billing import *
 
 urlpatterns = [
-    path("", home, name="home"),
+     path('', lambda request: redirect('index')),  # Redirige la raíz a /inicio/
+    path('inicio/', index, name='index'),
+    path('home/', home, name='home'),
     path('base/', base, name="base"),
     path('auth-confirm/', auth_confirm, name="auth_confirm"),
-    path('profile/', profile, name="profile"),
 
     #PRUEBA LOGIN WEB
     path('login/', web_login, name='web_login'), #LISTO
     path('logout/', web_logout, name='web_logout'),
-    path('indexprueba/', indexprueba, name='indexprueba'),
     path('baseprueba/', baseprueba, name='baseprueba'),
 
     path('registro-web/', registro_web, name='registro_web'), 
-    path('registro/', registro_gerente, name='registro'),
+    #path('registro/', registro_gerente, name='registro'),
 
     #CRUD USUARIOS(RRHH):
     path("usuarios/", UserListView.as_view(), name="user_list"),
@@ -35,6 +36,8 @@ urlpatterns = [
     path("tareas/nueva/", TareaCreateView.as_view(), name="tarea_create"),
     path("tareas/<int:pk>/editar/", TareaUpdateView.as_view(), name="tarea_update"),
     path("tareas/<int:pk>/eliminar/", TareaDeleteView.as_view(), name="tarea_delete"),
+    path("tareas/mias/", TareaListSupervisorMiasView.as_view(), name="tarea_list_supervisor_mias"),
+    path("tareas/equipo/", TareaListSupervisorEquipoView.as_view(), name="tarea_list_supervisor_equipo"),
 
     # Trabajador
     path("mis-tareas/", TareaListTrabajadorView.as_view(), name="tarea_list_trab"),
@@ -44,11 +47,11 @@ urlpatterns = [
     path("tareas/<int:pk>/", TareaDetailView.as_view(), name="tarea_detail"),
 
     # EVALUACIONES:
-    path("evaluaciones/", EvalListGSView.as_view(), name="eval_list_gs"), # Gerente/Supervisor
-    path("mis-evaluaciones/", EvalListTrabajadorView.as_view(), name="eval_list_trab"), # Trabajador
-    path("evaluaciones/nueva/", EvalCreateView.as_view(), name="eval_create"), # Supervisor
-    path("evaluaciones/<int:pk>/editar/", EvalUpdateView.as_view(), name="eval_update"),
-    path("evaluaciones/<int:pk>/eliminar/", EvalDeleteView.as_view(), name="eval_delete"),
+    path('evaluaciones/', EvalListGSView.as_view(), name='eval_list_gs'),
+    path('evaluaciones/nueva/', EvalCreateView.as_view(), name='eval_create'),
+    path('evaluaciones/<int:pk>/editar/', EvalGeneralUpdateView.as_view(), name='eval_update'),
+    path('evaluaciones/<int:pk>/eliminar/', EvalGeneralDeleteView.as_view(), name='eval_delete'),
+    path('mis-evaluaciones/', EvalMisEvaluacionesView.as_view(), name='eval_list_mias'),
 
     #DASHBOARD/REPORTES:
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
@@ -71,8 +74,9 @@ urlpatterns = [
     path("perfil/password/", MiPasswordChangeView.as_view(), name="perfil_password"),
 
     #sms:
-    path("password/sms/", password_reset_sms_request, name="password_reset_sms_request"),
-    path("password/sms/verificar/", password_reset_sms_verify, name="password_reset_sms_verify"),
+    path("password-reset/sms/", password_reset_sms_request, name="password_reset_sms_request"),
+    path("password-reset/sms/verify/", password_reset_sms_verify_code, name="password_reset_sms_verify"),
+    path("password-reset/sms/change/", password_reset_sms_change, name="password_reset_sms_change"),
 
     # Auth JWT
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
@@ -87,4 +91,17 @@ urlpatterns = [
     path("notificaciones/", notif_list_api, name="notif_list_api"),
     path("notificaciones/clear/", notif_clear_api, name="notif_clear_api"),
     path("notificaciones/delete_all/", notif_delete_all_api, name="notif_delete_all_api"),
+    
+    # Endpoints RRHH y Gerente/Supervisor
+    path("api/usuarios-por-rol-depto/", api_usuarios_por_rol_y_depto, name="api_usuarios_por_rol_y_depto"),
+
+    path("billing/", billing_overview, name="billing_overview"),
+    path("billing/checkout/", billing_checkout, name="billing_checkout"),
+    path("billing/success/", billing_success, name="billing_success"),
+    path("billing/failure/", billing_failure, name="billing_failure"),
+    path("billing/pending/", billing_pending, name="billing_pending"),
+    path("billing/refresh/", billing_refresh, name="billing_refresh"),
+
+    # Webhooks
+    path("webhooks/mercadopago/", mercadopago_webhook, name="mercadopago_webhook"),
 ]

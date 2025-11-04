@@ -1,0 +1,155 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="mb-0">Tareas del equipo ({{ request.user.departamento.nombre }})</h5>
+            <div class="ml-auto">
+                <a href="{% url 'tarea_create' %}" class="btn btn-primary btn-sm">
+                    <i class="fe fe-plus mr-1"></i> Asignar tarea
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" class="mb-0">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label class="small text-muted mb-1">Buscar</label>
+                            <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
+                                placeholder="Título o descripción…">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label class="small text-muted mb-1">Estado</label>
+                            <select name="estado" class="form-control">
+                                <option value="">Todos</option>
+                                {% for e in ESTADOS %}
+                                <option value="{{ e }}" {% if request.GET.estado == e %}selected{% endif %}>{{ e }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3 d-flex align-items-end">
+                            {% if request.GET %}
+                            <a href="{% url 'tarea_list_supervisor_equipo' %}" class="btn btn-light mr-2">
+                                <i class="fe fe-x"></i> Limpiar
+                            </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="fe fe-filter mr-1"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Título</th>
+                                <th>Asignado a</th>
+                                <th>Departamento</th>
+                                <th>Estado</th>
+                                <th>Vence</th>
+                                <th class="text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in tareas %}
+                            <tr>
+                                <td class="align-middle">
+                                    <a href="{% url 'tarea_detail' t.pk %}" class="font-weight-500">{{ t.titulo }}</a>
+                                </td>
+                                <td class="align-middle">
+                                    {{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}
+                                    <div class="small text-muted">{{ t.asignado.rol.nombre }}</div>
+                                </td>
+                                <td class="align-middle text-muted">
+                                    {{ t.departamento.nombre }}
+                                </td>
+                                <td class="align-middle">
+                                    {% if t.estado == "Pendiente" %}
+                                    <span class="badge badge-warning text-dark">Pendiente</span>
+                                    {% elif t.estado == "En progreso" %}
+                                    <span class="badge badge-info">En progreso</span>
+                                    {% elif t.estado == "Atrasada" %}
+                                    <span class="badge badge-danger">Atrasada</span>
+                                    {% elif t.estado == "Finalizada" %}
+                                    <span class="badge badge-success">Finalizada</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">{{ t.estado }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle">
+                                    {{ t.fecha_limite|date:"d/m/Y" }}
+                                </td>
+                                <td class="align-middle text-right">
+                                    <a href="{% url 'tarea_update' t.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fe fe-edit"></i> Editar
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-outline-danger js-delete-task"
+                                        data-url="{% url 'tarea_delete' t.pk %}" data-name="{{ t.titulo|escape }}">
+                                        <i class="fe fe-trash-2"></i> Eliminar
+                                    </a>
+                                    <a href="{% url 'tarea_historial' t.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fe fe-clock"></i> Historial
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    No hay tareas asignadas a tu equipo.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
+                <nav>
+                    <ul class="pagination mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
+                                aria-label="Anterior">&laquo;</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                        {% endif %}
+
+                        <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}"
+                                aria-label="Siguiente">&raquo;</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

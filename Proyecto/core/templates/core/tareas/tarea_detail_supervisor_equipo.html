@@ -1,0 +1,43 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-8">
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">{{ tarea.titulo }}</h5>
+      <div class="ml-auto">
+        <a href="{{ back_url }}" class="btn btn-light btn-sm mr-2">
+          <i class="fe fe-arrow-left mr-1"></i> Volver
+        </a>
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="fe fe-clock mr-1"></i> Historial
+        </a>
+        {% if can_edit %}
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-sm">
+          <i class="fe fe-edit mr-1"></i> Editar
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% include "core/tareas/_tarea_detail_body.html" %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header"><strong>Acciones</strong></div>
+      <div class="card-body">
+        {% if can_edit %}
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-block mb-2">
+          <i class="fe fe-edit mr-1"></i> Editar tarea
+        </a>
+        {% endif %}
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-block">
+          <i class="fe fe-clock mr-1"></i> Ver historial
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

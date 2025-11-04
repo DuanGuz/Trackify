@@ -22,63 +22,95 @@
     <!-- Filtros -->
     <div class="card mb-3">
       <div class="card-body">
-        <form method="get" class="mb-0">
+        <form method="get" class="mb-0" id="form-filtros">
           <div class="form-row">
             <div class="form-group col-md-3">
-              <label class="small text-muted mb-1">Trabajador</label>
-              <select name="trabajador" class="form-control">
+              <label class="small text-muted mb-1">Buscar</label>
+              <input type="text" name="q" class="form-control" placeholder="Evaluado/Evaluador" value="{{ request.GET.q }}">
+            </div>
+
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Tipo</label>
+              <select name="tipo" class="form-control">
                 <option value="">Todos</option>
-                {% for tr in trabajadores %}
-                  <option value="{{ tr.id }}" {% if request.GET.trabajador == tr.id|stringformat:"s" %}selected{% endif %}>
-                    {{ tr.primer_apellido }} {{ tr.primer_nombre }}
-                  </option>
-                {% endfor %}
+                <option value="SUPERVISOR" {% if request.GET.tipo == "SUPERVISOR" %}selected{% endif %}>Supervisor</option>
+                <option value="TRABAJADOR" {% if request.GET.tipo == "TRABAJADOR" %}selected{% endif %}>Trabajador</option>
               </select>
             </div>
 
-            <div class="form-group col-md-3">
-              <label class="small text-muted mb-1">Supervisor</label>
-              <select name="supervisor" class="form-control">
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Puntaje mínimo</label>
+              <select name="puntaje_min" class="form-control">
                 <option value="">Todos</option>
-                {% for sp in supervisores %}
-                  <option value="{{ sp.id }}" {% if request.GET.supervisor == sp.id|stringformat:"s" %}selected{% endif %}>
-                    {{ sp.primer_apellido }} {{ sp.primer_nombre }}
+                {% for n in "12345" %}
+                  <option value="{{ forloop.counter }}"
+                          {% if request.GET.puntaje_min == forloop.counter|stringformat:"s" %}selected{% endif %}>
+                    {{ forloop.counter }}+
                   </option>
                 {% endfor %}
               </select>
             </div>
 
             <div class="form-group col-md-2">
-              <label class="small text-muted mb-1">Puntaje</label>
-              <select name="puntaje" class="form-control">
+              <label class="small text-muted mb-1">Desde</label>
+              <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
+            </div>
+
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Hasta</label>
+              <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Evaluador</label>
+              <select name="evaluador" class="form-control">
                 <option value="">Todos</option>
-                {% for p in "12345" %}
-                  <option value="{{ forloop.counter }}" {% if request.GET.puntaje == forloop.counter|stringformat:"s" %}selected{% endif %}>
-                    {{ forloop.counter }}
+                {% for u in evaluadores %}
+                  <option value="{{ u.id }}" {% if request.GET.evaluador == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.primer_apellido }} {{ u.primer_nombre }} ({{ u.rol.nombre }})
                   </option>
                 {% endfor %}
               </select>
             </div>
 
-            <div class="form-group col-md-4">
-              <label class="small text-muted mb-1">Rango de fechas (creación)</label>
-              <div class="d-flex">
-                <input type="date" name="f_ini" class="form-control" value="{{ request.GET.f_ini }}">
-                <span class="mx-2 d-flex align-items-center">—</span>
-                <input type="date" name="f_fin" class="form-control" value="{{ request.GET.f_fin }}">
-              </div>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Evaluado (Supervisores)</label>
+              <select id="sel-evaluado-sup" class="form-control">
+                <option value="">Todos</option>
+                {% for u in evaluados_supervisores %}
+                  <option value="{{ u.id }}" {% if request.GET.evaluado == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.primer_apellido }} {{ u.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
             </div>
-          </div>
 
-          <div class="d-flex justify-content-end">
-            {% if request.GET %}
-              <a href="{% url 'reporte_evaluaciones' %}" class="btn btn-light mr-2">
-                <i class="fe fe-x"></i> Limpiar
-              </a>
-            {% endif %}
-            <button type="submit" class="btn btn-secondary">
-              <i class="fe fe-filter mr-1"></i> Filtrar
-            </button>
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Evaluado (Trabajadores)</label>
+              <select id="sel-evaluado-trab" class="form-control">
+                <option value="">Todos</option>
+                {% for u in evaluados_trabajadores %}
+                  <option value="{{ u.id }}" {% if request.GET.evaluado == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.primer_apellido }} {{ u.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+              <!-- El valor real que viaja en GET -->
+              <input type="hidden" name="evaluado" id="inp-evaluado" value="{{ request.GET.evaluado }}">
+            </div>
+
+            <div class="form-group col-md-3 d-flex align-items-end justify-content-end">
+              {% if request.GET %}
+                <a href="{% url 'reporte_evaluaciones' %}" class="btn btn-light mr-2">
+                  <i class="fe fe-x"></i> Limpiar
+                </a>
+              {% endif %}
+              <button type="submit" class="btn btn-secondary">
+                <i class="fe fe-filter mr-1"></i> Filtrar
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -94,8 +126,9 @@
           <table class="table table-hover mb-0">
             <thead class="thead-light">
               <tr>
-                <th>Trabajador</th>
-                <th>Supervisor</th>
+                <th>Evaluado</th>
+                <th>Tipo</th>
+                <th>Evaluador</th>
                 <th>Puntaje</th>
                 <th>Fecha</th>
                 <th>Comentarios</th>
@@ -105,15 +138,26 @@
               {% for e in evaluaciones %}
               <tr>
                 <td class="align-middle">
-                  {{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}
+                  {{ e.evaluado.primer_nombre }} {{ e.evaluado.primer_apellido }}
+                  <div class="small">
+                    <span class="text-muted">{{ e.evaluado.rol }}</span>
+                  </div>
                 </td>
                 <td class="align-middle">
-                  {{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}
+                  {% if e.tipo == "SUPERVISOR" %}
+                    <span class="badge badge-info">Supervisor</span>
+                  {% else %}
+                    <span class="badge badge-secondary">Trabajador</span>
+                  {% endif %}
+                </td>
+                <td class="align-middle">
+                  {{ e.evaluador.primer_nombre }} {{ e.evaluador.primer_apellido }}
+                  <div class="small text-muted">{{ e.evaluador.rol.nombre }}</div>
                 </td>
                 <td class="align-middle">
                   <span class="badge badge-pill
-                    {% if e.puntaje >= 4 %}badge-success
-                    {% elif e.puntaje == 3 %}badge-warning text-dark
+                    {% if e.puntaje|default:0 >= 4 %}badge-success
+                    {% elif e.puntaje|default:0 == 3 %}badge-warning text-dark
                     {% else %}badge-danger{% endif %}">
                     {{ e.puntaje }} / 5
                   </span>
@@ -123,7 +167,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="text-center text-muted py-4">Sin resultados.</td>
+                <td colspan="6" class="text-center text-muted py-4">Sin resultados.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -132,40 +176,56 @@
       </div>
     </div>
 
-    <!-- Resumen (promedio por trabajador) -->
+    <!-- Resumen (promedio por evaluado) -->
     <div class="card">
       <div class="card-header">
-        <strong>Resumen (promedio por trabajador)</strong>
+        <strong>Resumen (promedio por evaluado)</strong>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead class="thead-light">
               <tr>
-                <th>Trabajador</th>
+                <th>Evaluado</th>
+                <th>Rol</h>
                 <th>Promedio</th>
                 <th class="text-right"># Eval</th>
               </tr>
             </thead>
             <tbody>
-              {% for r in resumen_trabajadores %}
+              {% for r in resumen_evaluados %}
               <tr>
                 <td class="align-middle">
-                  {{ r.trabajador__primer_nombre }} {{ r.trabajador__primer_apellido }}
+                  {{ r.evaluado__primer_nombre }} {{ r.evaluado__primer_apellido }}
+                </td>
+                <td class="align-middle">
+                  {% with role=r.evaluado__rol__nombre %}
+                    {% if role == "Trabajador" %}
+                      <span class="badge badge-success">Trabajador</span>
+                    {% elif role == "Recursos humanos" %}
+                      <span class="badge badge-danger">Recursos humanos</span>
+                    {% elif role == "Supervisor" %}
+                      <span class="badge badge-warning text-dark">Supervisor</span>
+                    {% elif role == "Gerente" %}
+                      <span class="badge badge-info">Gerente</span>
+                    {% else %}
+                      <span class="badge badge-secondary">{{ role|default:"—" }}</span>
+                    {% endif %}
+                  {% endwith %}
                 </td>
                 <td class="align-middle">
                   <span class="badge badge-pill
-                    {% if r.prom|floatformat:1 >= 4 %}badge-success
-                    {% elif r.prom|floatformat:1 == '3.0' or r.prom|floatformat:1 == '3.1' or r.prom|floatformat:1 == '3.2' or r.prom|floatformat:1 == '3.3' or r.prom|floatformat:1 == '3.4' or r.prom|floatformat:1 == '3.5' or r.prom|floatformat:1 == '3.6' or r.prom|floatformat:1 == '3.7' or r.prom|floatformat:1 == '3.8' or r.prom|floatformat:1 == '3.9' %}badge-warning text-dark
+                    {% if r.prom|default:0 >= 4 %}badge-success
+                    {% elif r.prom|default:0 >= 3 and r.prom|default:0 < 4 %}badge-warning text-dark
                     {% else %}badge-danger{% endif %}">
-                    {{ r.prom|floatformat:2 }}
+                    {{ r.prom|floatformat:2 }} / 5
                   </span>
                 </td>
                 <td class="align-middle text-right">{{ r.total }}</td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="3" class="text-center text-muted py-4">Sin datos.</td>
+                <td colspan="4" class="text-center text-muted py-4">Sin datos.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -176,4 +236,42 @@
 
   </div>
 </div>
+{% endblock %}
+
+{% block js %}
+{{ block.super }}
+<script>
+  // Mutua exclusión entre "Evaluado Supervisores" y "Evaluado Trabajadores"
+  (function(){
+    var selSup  = document.getElementById('sel-evaluado-sup');
+    var selTrab = document.getElementById('sel-evaluado-trab');
+    var inpEval = document.getElementById('inp-evaluado');
+
+    function onSupChange(){
+      if (!selSup) return;
+      var v = selSup.value || '';
+      if (v) {
+        if (selTrab) selTrab.value = '';
+        inpEval.value = v;
+      } else {
+        // si ambos quedan vacíos, limpiar hidden
+        if (selTrab && !selTrab.value) inpEval.value = '';
+      }
+    }
+
+    function onTrabChange(){
+      if (!selTrab) return;
+      var v = selTrab.value || '';
+      if (v) {
+        if (selSup) selSup.value = '';
+        inpEval.value = v;
+      } else {
+        if (selSup && !selSup.value) inpEval.value = '';
+      }
+    }
+
+    if (selSup)  selSup.addEventListener('change', onSupChange);
+    if (selTrab) selTrab.addEventListener('change', onTrabChange);
+  })();
+</script>
 {% endblock %}

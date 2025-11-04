@@ -64,10 +64,20 @@
 
 {% block js %}
   {{ block.super }}
+
+  <script>
+    // Cambia el label del campo puntaje a "Puntaje (1-5)"
+    document.addEventListener("DOMContentLoaded", function() {
+      const label = document.querySelector('label[for*="puntaje"]');
+      if (label) {
+        label.textContent = "Puntaje (1–5)*";
+      }
+    });
+  </script>
+
   <script>
     // Resalta el puntaje en rojo/amarillo/verde según valor
     (function () {
-      // Intenta detectar el input de puntaje por su name (EvaluacionForm usa "puntaje")
       var input = document.querySelector('input[name="puntaje"], select[name="puntaje"]');
       var badge = document.getElementById('puntaje-badge');
 
@@ -87,8 +97,8 @@
 
       if (input) {
         setBadge(input.value);
-        input.addEventListener('input', function (e) { setBadge(e.target.value); });
-        input.addEventListener('change', function (e) { setBadge(e.target.value); });
+        input.addEventListener('input', e => setBadge(e.target.value));
+        input.addEventListener('change', e => setBadge(e.target.value));
       }
     })();
   </script>

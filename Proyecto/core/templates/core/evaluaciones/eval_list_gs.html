@@ -5,107 +5,128 @@
 <div class="row">
   <div class="col-12">
 
-    <!-- Encabezado + CTA -->
+    <!-- Encabezado + KPIs -->
     <div class="d-flex align-items-center mb-3">
       <h5 class="mb-0">Evaluaciones</h5>
-      {% if request.user.is_superuser or request.user.rol.nombre == "Supervisor" %}
-        <a href="{% url 'eval_create' %}" class="btn btn-primary btn-sm ml-auto">
+      <div class="ml-auto">
+        <a href="{% url 'eval_create' %}" class="btn btn-primary btn-sm">
           <i class="fe fe-plus mr-1"></i> Nueva evaluación
         </a>
-      {% endif %}
+      </div>
     </div>
 
-    <!-- KPIs -->
-    <div class="row">
-      <div class="col-12 col-md-6 col-xl-3 mb-3">
-        <div class="card shadow-sm h-100">
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <div class="card shadow-sm">
           <div class="card-body d-flex align-items-center">
-            <i class="fe fe-star mr-3"></i>
+            <i class="fe fe-activity mr-3"></i>
             <div>
-              <div class="small text-muted">Promedio puntual</div>
+              <div class="small text-muted">Promedio</div>
               <div class="h5 mb-0">
-                {% if kpi_promedio %}{{ kpi_promedio|floatformat:1 }} / 5{% else %}—{% endif %}
+                {% if kpi_promedio %}{{ kpi_promedio|floatformat:2 }}{% else %}—{% endif %}
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="col-12 col-md-6 col-xl-3 mb-3">
-        <div class="card shadow-sm h-100">
+      <div class="col-md-3">
+        <div class="card shadow-sm">
           <div class="card-body d-flex align-items-center">
-            <i class="fe fe-file-text mr-3"></i>
+            <i class="fe fe-list mr-3"></i>
             <div>
-              <div class="small text-muted">Total evaluaciones</div>
+              <div class="small text-muted">Total</div>
               <div class="h5 mb-0">{{ kpi_total|default:"0" }}</div>
             </div>
           </div>
         </div>
       </div>
-      <!-- deja espacio para futuros KPIs si quieres -->
     </div>
 
-    <!-- Filtros avanzados -->
+    <!-- Filtros -->
     <div class="card mb-3">
       <div class="card-body">
         <form method="get" class="mb-0">
           <div class="form-row">
             <div class="form-group col-md-3">
               <label class="small text-muted mb-1">Buscar</label>
-              <input type="text" name="q" value="{{ request.GET.q }}" class="form-control"
-                     placeholder="Trabajador o supervisor…">
+              <input type="text" name="q" class="form-control" placeholder="Evaluado/Evaluador"
+                     value="{{ request.GET.q }}">
             </div>
-            <div class="form-group col-md-3">
-              <label class="small text-muted mb-1">Supervisor</label>
-              <select name="supervisor" class="form-control">
+
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Tipo</label>
+              <select name="tipo" class="form-control">
                 <option value="">Todos</option>
-                {% for s in supervisores %}
-                  <option value="{{ s.id }}" {% if request.GET.supervisor == s.id|stringformat:"s" %}selected{% endif %}>
-                    {{ s.primer_apellido }} {{ s.primer_nombre }}
-                  </option>
-                {% endfor %}
+                <option value="SUPERVISOR" {% if request.GET.tipo == "SUPERVISOR" %}selected{% endif %}>Supervisor</option>
+                <option value="TRABAJADOR" {% if request.GET.tipo == "TRABAJADOR" %}selected{% endif %}>Trabajador</option>
               </select>
             </div>
-            <div class="form-group col-md-3">
-              <label class="small text-muted mb-1">Trabajador</label>
-              <select name="trabajador" class="form-control">
-                <option value="">Todos</option>
-                {% for t in trabajadores %}
-                  <option value="{{ t.id }}" {% if request.GET.trabajador == t.id|stringformat:"s" %}selected{% endif %}>
-                    {{ t.primer_apellido }} {{ t.primer_nombre }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="form-group col-md-3">
+
+            <div class="form-group col-md-2">
               <label class="small text-muted mb-1">Puntaje mínimo</label>
-              <select name="puntaje_min" class="form-control">
-                <option value="">Todos</option>
-                {% for n in "12345" %}
-                  <option value="{{ forloop.counter }}" {% if request.GET.puntaje_min == forloop.counter|stringformat:"s" %}selected{% endif %}>
-                    {{ forloop.counter }}+
-                  </option>
-                {% endfor %}
-              </select>
+              <input type="number" min="1" max="10" name="puntaje_min" class="form-control"
+                     value="{{ request.GET.puntaje_min }}">
+            </div>
+
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Desde</label>
+              <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
+            </div>
+
+            <div class="form-group col-md-2">
+              <label class="small text-muted mb-1">Hasta</label>
+              <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group col-md-3">
-              <label class="small text-muted mb-1">Desde</label>
-              <input type="date" name="desde" class="form-control" value="{{ request.GET.desde }}">
+              <label class="small text-muted mb-1">Evaluador</label>
+              <select name="evaluador" class="form-control">
+                <option value="">Todos</option>
+                {% for u in evaluadores %}
+                  <option value="{{ u.id }}" {% if request.GET.evaluador == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.primer_apellido }} {{ u.primer_nombre }} ({{ u.rol.nombre }})
+                  </option>
+                {% endfor %}
+              </select>
             </div>
+
             <div class="form-group col-md-3">
-              <label class="small text-muted mb-1">Hasta</label>
-              <input type="date" name="hasta" class="form-control" value="{{ request.GET.hasta }}">
+              <label class="small text-muted mb-1">Evaluado (Supervisores)</label>
+              <select name="evaluado_sup" class="form-control"
+                      onchange="if(this.value){ document.querySelector('[name=evaluado]').value=''; }">
+                <option value="">Todos</option>
+                {% for u in evaluados_supervisores %}
+                  <option value="{{ u.id }}" {% if request.GET.evaluado == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.primer_apellido }} {{ u.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+              <input type="hidden" name="evaluado" value="{{ request.GET.evaluado }}">
             </div>
-            <div class="form-group col-md-6 d-flex align-items-end justify-content-end">
+
+            <div class="form-group col-md-3">
+              <label class="small text-muted mb-1">Evaluado (Trabajadores)</label>
+              <select class="form-control"
+                      onchange="document.querySelector('[name=evaluado]').value=this.value; document.querySelector('[name=evaluado_sup]').value='';">
+                <option value="">Todos</option>
+                {% for u in evaluados_trabajadores %}
+                  <option value="{{ u.id }}" {% if request.GET.evaluado == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.primer_apellido }} {{ u.primer_nombre }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group col-md-3 d-flex align-items-end justify-content-end">
               {% if request.GET %}
                 <a href="{% url 'eval_list_gs' %}" class="btn btn-light mr-2">
                   <i class="fe fe-x"></i> Limpiar
                 </a>
               {% endif %}
-              <button class="btn btn-secondary" type="submit">
-                <i class="fe fe-filter"></i> Filtrar
+              <button type="submit" class="btn btn-secondary">
+                <i class="fe fe-filter mr-1"></i> Filtrar
               </button>
             </div>
           </div>
@@ -120,56 +141,58 @@
           <table class="table table-hover mb-0">
             <thead class="thead-light">
               <tr>
-                <th>Trabajador</th>
-                <th>Supervisor</th>
+                <th>Evaluado</th>
+                <th>Evaluador</th>
                 <th>Puntaje</th>
                 <th>Fecha</th>
                 <th>Comentarios</th>
-                <th class="text-right">Acciones</th>
+                <th class="text-right" style="width: 160px;">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {% for e in evaluaciones %}
               <tr>
                 <td class="align-middle">
-                  {{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}
+                  {{ e.evaluado.primer_nombre }} {{ e.evaluado.primer_apellido }}
+                  <div class="small text-muted">{{ e.evaluado.rol.nombre }}</div>
                 </td>
                 <td class="align-middle">
-                  {{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}
+                  {{ e.evaluador.primer_nombre }} {{ e.evaluador.primer_apellido }}
+                  <div class="small text-muted">{{ e.evaluador.rol.nombre }}</div>
                 </td>
                 <td class="align-middle">
-                  <span class="badge badge-pill {% if e.puntaje >= 4 %}badge-success{% elif e.puntaje == 3 %}badge-warning text-dark{% else %}badge-danger{% endif %}">
-                    {{ e.puntaje }} / 5
+                  <span class="badge badge-pill
+                    {% if e.puntaje >= 4 %}
+                      badge-success
+                    {% elif e.puntaje == 3 %}
+                      badge-warning text-dark
+                    {% else %}
+                      badge-danger
+                    {% endif %}">
+                    {{ e.puntaje }}
                   </span>
                 </td>
                 <td class="align-middle">{{ e.created_at|date:"d/m/Y H:i" }}</td>
-                <td class="align-middle text-muted">
+                <td class="align-middle text-truncate" style="max-width: 260px;">
                   {{ e.comentarios|default:"—" }}
                 </td>
                 <td class="align-middle text-right">
-                  {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" %}
-                    <a href="{% url 'eval_update' e.pk %}" class="btn btn-sm btn-outline-primary">
-                      <i class="fe fe-edit"></i> Editar
-                    </a>
+                  {# Gerente o superuser: todo #}
+                  {% if request.user.is_superuser or request.user.rol and request.user.rol.nombre == "Gerente" %}
+                    <a href="{% url 'eval_update' e.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
                     <a href="#" class="btn btn-sm btn-outline-danger js-delete-eval"
                        data-url="{% url 'eval_delete' e.pk %}"
-                       data-label="{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}">
-                      <i class="fe fe-trash-2"></i> Eliminar
+                       data-label="{{ e.evaluado.primer_nombre }} {{ e.evaluado.primer_apellido }}">
+                      Eliminar
                     </a>
-                    <a href="{% url 'eval_historial' e.pk %}" class="btn btn-sm btn-outline-secondary">
-                      <i class="fe fe-clock"></i> Historial
-                    </a>
-                  {% elif request.user.rol.nombre == "Supervisor" and e.supervisor_id == request.user.id %}
-                    <a href="{% url 'eval_update' e.pk %}" class="btn btn-sm btn-outline-primary">
-                      <i class="fe fe-edit"></i> Editar
-                    </a>
+
+                  {# Supervisor: solo si es el evaluador de ese registro #}
+                  {% elif request.user.rol and request.user.rol.nombre == "Supervisor" and e.evaluador_id == request.user.id %}
+                    <a href="{% url 'eval_update' e.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
                     <a href="#" class="btn btn-sm btn-outline-danger js-delete-eval"
                        data-url="{% url 'eval_delete' e.pk %}"
-                       data-label="{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}">
-                      <i class="fe fe-trash-2"></i> Eliminar
-                    </a>
-                    <a href="{% url 'eval_historial' e.pk %}" class="btn btn-sm btn-outline-secondary">
-                      <i class="fe fe-clock"></i> Historial
+                       data-label="{{ e.evaluado.primer_nombre }} {{ e.evaluado.primer_apellido }}">
+                      Eliminar
                     </a>
                   {% else %}
                     <span class="text-muted">—</span>
@@ -178,7 +201,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center text-muted py-4">Sin evaluaciones.</td>
+                <td colspan="7" class="text-center text-muted py-4">Sin resultados.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -186,35 +209,24 @@
         </div>
       </div>
 
-      <!-- Paginación (preserva filtros) -->
       {% if is_paginated %}
       <div class="card-footer d-flex align-items-center justify-content-between">
         <div>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
         <nav>
           <ul class="pagination mb-0">
-            {% with params=request.GET.urlencode %}
-              {% if page_obj.has_previous %}
-                <li class="page-item">
-                  <a class="page-link"
-                     href="?{% if params %}{{ params }}&{% endif %}page={{ page_obj.previous_page_number }}"
-                     aria-label="Anterior"><span aria-hidden="true">&laquo;</span></a>
-                </li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-              {% endif %}
+            {% if page_obj.has_previous %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+            {% endif %}
 
-              <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
 
-              {% if page_obj.has_next %}
-                <li class="page-item">
-                  <a class="page-link"
-                     href="?{% if params %}{{ params }}&{% endif %}page={{ page_obj.next_page_number }}"
-                     aria-label="Siguiente"><span aria-hidden="true">&raquo;</span></a>
-                </li>
-              {% else %}
-                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-              {% endif %}
-            {% endwith %}
+            {% if page_obj.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+            {% endif %}
           </ul>
         </nav>
       </div>
@@ -234,12 +246,12 @@
   {{ block.super }}
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
-    (function() {
-      document.addEventListener('click', function(e) {
+    (function () {
+      document.addEventListener('click', function (e) {
         const btn = e.target.closest('.js-delete-eval');
         if (!btn) return;
-        e.preventDefault();
 
+        e.preventDefault();
         const url = btn.getAttribute('data-url');
         const label = btn.getAttribute('data-label') || 'esta evaluación';
 
@@ -252,8 +264,9 @@
           cancelButtonText: 'Cancelar',
           reverseButtons: true,
           confirmButtonColor: '#e55353'
-        }).then(function(result) {
+        }).then(function (result) {
           if (result.isConfirmed) {
+            // Enviamos POST con CSRF usando un form oculto (navega al success_url del DeleteView)
             const form = document.getElementById('delete-eval-form');
             form.setAttribute('action', url);
             form.submit();

@@ -1,0 +1,54 @@
+{% extends "core/base_public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="mb-1">Suscripción de {{ request.user.empresa.nombre }}</h5>
+        <p class="text-muted mb-2">Plan: {{ sub.plan }} · Ciclo: {{ sub.ciclo }}</p>
+        <p class="mb-0">
+          Estado: <span class="badge badge-{% if sub.is_active %}success{% else %}secondary{% endif %}">
+            {{ sub.estado }}
+          </span>
+          {% if sub.next_billing_at %}
+          · Próximo cobro: {{ sub.next_billing_at|date:"d/m/Y H:i" }}
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    {% if messages %}
+    {% for m in messages %}
+    <div class="alert alert-{{ m.tags|default:'info' }}">{{ m }}</div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6>Acciones</h6>
+
+        <a href="{% url 'billing_checkout' %}" class="btn btn-primary btn-block mb-2">
+          {% if sub.is_active %}Cambiar ciclo / renovar{% else %}Suscribirse{% endif %}
+        </a>
+
+        <!-- 🔄 Nuevo botón para forzar sincronización manual -->
+        <a href="{% url 'billing_refresh' %}" class="btn btn-outline-info btn-block mb-2">
+          Refrescar estado de suscripción
+        </a>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-block">
+          Ir al Dashboard
+        </a>
+
+        <div class="small text-muted mt-2">
+          * Para cancelar, hazlo desde tu cuenta MercadoPago o contáctanos.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

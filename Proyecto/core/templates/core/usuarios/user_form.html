@@ -3,63 +3,96 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="row justify-content-center"> {# Centra horizontalmente el contenido #}
-    <div class="col-12 col-md-10 col-lg-8 col-xl-6"> {# Controla el ancho máximo #}
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8 col-xl-6">
 
-        <!-- Título + volver -->
         <div class="d-flex align-items-center mb-3">
             <h5 class="mb-0">
-                {% if form.instance.pk %}
-                Editar usuario
-                {% else %}
-                Crear usuario (RRHH)
-                {% endif %}
+                {% if form.instance.pk %}Editar usuario{% else %}Crear usuario (RRHH){% endif %}
             </h5>
             <a href="{% url 'user_list' %}" class="btn btn-light btn-sm ml-auto">
                 <i class="fe fe-arrow-left mr-1"></i> Volver al listado
             </a>
         </div>
 
-        <!-- Mensajes flash -->
         {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} mb-3">{{ message }}</div>
-        {% endfor %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} mb-3">{{ message }}</div>
+          {% endfor %}
         {% endif %}
 
-        <!-- Errores globales -->
         {% if form.non_field_errors %}
-        <div class="alert alert-danger mb-3">
+          <div class="alert alert-danger mb-3">
             {{ form.non_field_errors }}
-        </div>
+          </div>
         {% endif %}
 
-        <!-- Tarjeta del formulario -->
         <div class="card shadow-sm">
             <div class="card-body">
-
                 <form method="post" action="">
                     {% csrf_token %}
-
                     {% if form|crispy %}
-                    {{ form|crispy }}
+                      {{ form|crispy }}
                     {% else %}
-                    {{ form.as_p }}
+                      {{ form.as_p }}
                     {% endif %}
 
                     <div class="d-flex mt-4">
                         <button type="submit" class="btn btn-primary">
                             <i class="fe fe-save mr-1"></i> Guardar
                         </button>
-                        <a href="{% url 'user_list' %}" class="btn btn-outline-secondary ml-2">
-                            Cancelar
-                        </a>
+                        <a href="{% url 'user_list' %}" class="btn btn-outline-secondary ml-2">Cancelar</a>
                     </div>
                 </form>
-
             </div>
         </div>
 
     </div>
 </div>
+{% endblock %}
+
+{% block js %}
+  {{ block.super }}
+  <script>
+    (function () {
+      const rolSel = document.getElementById('id_rol');
+      const deptSel = document.getElementById('id_departamento');
+
+      if (!rolSel || !deptSel) return;
+
+      // 🔹 Creamos un div para el mensaje (insertado justo después del campo departamento)
+      const msg = document.createElement('div');
+      msg.className = 'alert alert-info mt-2';
+      msg.style.display = 'none';
+      msg.innerHTML = '<i class="fe fe-info mr-1"></i> Los usuarios de <strong>Recursos Humanos</strong> no deben tener un departamento asignado.';
+
+      // Insertar el mensaje debajo del select de departamento
+      deptSel.parentNode.insertBefore(msg, deptSel.nextSibling);
+
+      function isRRHH() {
+        const opt = rolSel.options[rolSel.selectedIndex];
+        const texto = (opt ? opt.text : '').trim().toLowerCase();
+        return texto === 'recursos humanos';
+      }
+
+      function toggleDepto() {
+        const rrhh = isRRHH();
+        deptSel.disabled = rrhh;
+        if (rrhh) {
+          deptSel.value = '';
+          msg.style.display = 'block';
+          deptSel.classList.add('bg-light');
+        } else {
+          msg.style.display = 'none';
+          deptSel.classList.remove('bg-light');
+        }
+      }
+
+      // Estado inicial (al cargar o editar)
+      toggleDepto();
+
+      // Reacción al cambio de rol
+      rolSel.addEventListener('change', toggleDepto);
+    })();
+  </script>
 {% endblock %}

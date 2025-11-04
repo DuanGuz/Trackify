@@ -1,0 +1,21 @@
+{% load static %}
+<nav class="py-3" style="background: #fff; border-bottom:1px solid rgba(2,6,23,.06)">
+  <div class="container d-flex align-items-center justify-content-between">
+    <a href="{% url 'index' %}" class="d-flex align-items-center text-decoration-none">
+      <img src="{% static 'core/img/logo.png' %}" alt="Trackify" style="height:32px;width:32px" class="mr-2">
+      <strong class="text-dark mb-0">Trackify</strong>
+    </a>
+    <div class="d-flex align-items-center">
+      {% if request.user.is_authenticated %}
+        <a href="{% url 'home' %}" class="btn btn-sm btn-outline-secondary mr-2">Ir al panel</a>
+        <form action="{% url 'web_logout' %}" method="post" class="d-inline">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-outline-danger">Cerrar sesión</button>
+        </form>
+      {% else %}
+        <a href="{% url 'web_login' %}" class="btn btn-sm btn-outline-primary mr-2">Iniciar sesión</a>
+        <a href="{% url 'registro_web' %}" class="btn btn-sm btn-gradient">Crear cuenta</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>

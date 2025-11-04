@@ -10,27 +10,56 @@
       <h5 class="mb-0">{{ tarea.titulo }}</h5>
 
       <div class="ml-auto">
-        {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" or request.user.rol.nombre == "Supervisor" %}
-          <a href="{% url 'tarea_list_gs' %}" class="btn btn-light btn-sm mr-2">
-            <i class="fe fe-arrow-left mr-1"></i> Volver
-          </a>
-          <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-sm mr-2">
-            <i class="fe fe-clock mr-1"></i> Historial
-          </a>
-          <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-sm">
-            <i class="fe fe-edit mr-1"></i> Editar
-          </a>
-        {% elif request.user.rol.nombre == "Trabajador" %}
-          <a href="{% url 'tarea_list_trab' %}" class="btn btn-light btn-sm mr-2">
-            <i class="fe fe-arrow-left mr-1"></i> Volver
-          </a>
-          <a href="{% url 'tarea_estado' tarea.pk %}" class="btn btn-warning btn-sm">
-            <i class="fe fe-activity mr-1"></i> Cambiar estado
-          </a>
+        {# --- Superuser / Gerente / Supervisor --- #}
+        {% if request.user.is_superuser %}
+        <a href="{% url 'tarea_list_gs' %}" class="btn btn-light btn-sm mr-2">
+          <i class="fe fe-arrow-left mr-1"></i> Volver
+        </a>
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="fe fe-clock mr-1"></i> Historial
+        </a>
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-sm">
+          <i class="fe fe-edit mr-1"></i> Editar
+        </a>
+
+        {% elif request.user.rol and request.user.rol.nombre == "Gerente" %}
+        <a href="{% url 'tarea_list_gs' %}" class="btn btn-light btn-sm mr-2">
+          <i class="fe fe-arrow-left mr-1"></i> Volver
+        </a>
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="fe fe-clock mr-1"></i> Historial
+        </a>
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-sm">
+          <i class="fe fe-edit mr-1"></i> Editar
+        </a>
+
+        {% elif request.user.rol and request.user.rol.nombre == "Supervisor" %}
+        <a href="{% url 'tarea_list_gs' %}" class="btn btn-light btn-sm mr-2">
+          <i class="fe fe-arrow-left mr-1"></i> Volver
+        </a>
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-sm mr-2">
+          <i class="fe fe-clock mr-1"></i> Historial
+        </a>
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-sm">
+          <i class="fe fe-edit mr-1"></i> Editar
+        </a>
+
+        {# --- Trabajador --- #}
+        {% elif request.user.rol and request.user.rol.nombre == "Trabajador" %}
+        <a href="{% url 'tarea_list_trab' %}" class="btn btn-light btn-sm mr-2">
+          <i class="fe fe-arrow-left mr-1"></i> Volver
+        </a>
+        {% if request.user.id == tarea.asignado_id %}
+        <a href="{% url 'tarea_estado' tarea.pk %}" class="btn btn-outline-primary btn-sm">
+          <i class="fe fe-refresh-ccw mr-1"></i> Cambiar estado
+        </a>
+        {% endif %}
+
+        {# --- Fallback --- #}
         {% else %}
-          <a href="{% url 'home' %}" class="btn btn-light btn-sm">
-            <i class="fe fe-arrow-left mr-1"></i> Volver
-          </a>
+        <a href="{% url 'home' %}" class="btn btn-light btn-sm">
+          <i class="fe fe-arrow-left mr-1"></i> Volver
+        </a>
         {% endif %}
       </div>
     </div>
@@ -42,15 +71,15 @@
           <!-- Estado -->
           <div class="mr-3">
             {% if tarea.estado == "Pendiente" %}
-              <span class="badge badge-warning text-dark">Pendiente</span>
+            <span class="badge badge-warning text-dark">Pendiente</span>
             {% elif tarea.estado == "En progreso" %}
-              <span class="badge badge-info">En progreso</span>
+            <span class="badge badge-info">En progreso</span>
             {% elif tarea.estado == "Atrasada" %}
-              <span class="badge badge-danger">Atrasada</span>
+            <span class="badge badge-danger">Atrasada</span>
             {% elif tarea.estado == "Finalizada" %}
-              <span class="badge badge-success">Finalizada</span>
+            <span class="badge badge-success">Finalizada</span>
             {% else %}
-              <span class="badge badge-secondary">{{ tarea.estado }}</span>
+            <span class="badge badge-secondary">{{ tarea.estado }}</span>
             {% endif %}
           </div>
 
@@ -77,13 +106,13 @@
         </div>
 
         {% if tarea.descripcion %}
-          <hr>
-          <div>
-            <strong>Descripción</strong>
-            <div class="text-muted mt-1">
-              {{ tarea.descripcion|linebreaks }}
-            </div>
+        <hr>
+        <div>
+          <strong>Descripción</strong>
+          <div class="text-muted mt-1">
+            {{ tarea.descripcion|linebreaks }}
           </div>
+        </div>
         {% endif %}
       </div>
     </div>
@@ -97,32 +126,47 @@
       </div>
       <div class="card-body p-0">
         {% if tarea.comments.all %}
-          <ul class="list-group list-group-flush">
-            {% for c in tarea.comments.all %}
-            <li class="list-group-item">
-              <div class="d-flex justify-content-between">
-                <div class="font-weight-500">
-                  {{ c.usuario.username }}
-                  <span class="text-muted small">• {{ c.created_at|date:"d/m/Y H:i" }}</span>
-                </div>
+        <ul class="list-group list-group-flush">
+          {% for c in tarea.comments.all %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between">
+              <div class="font-weight-500">
+                {{ c.usuario.username }}
+                <span class="text-muted small">• {{ c.created_at|date:"d/m/Y H:i" }}</span>
               </div>
-              <div class="mt-1">
-                {{ c.contenido|linebreaksbr }}
-              </div>
-            </li>
-            {% empty %}
-            <li class="list-group-item text-muted text-center py-4">Sin comentarios.</li>
-            {% endfor %}
-          </ul>
+            </div>
+            <div class="mt-1">
+              {{ c.contenido|linebreaksbr }}
+            </div>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted text-center py-4">Sin comentarios.</li>
+          {% endfor %}
+        </ul>
         {% else %}
-          <div class="p-4 text-center text-muted">Sin comentarios.</div>
+        <div class="p-4 text-center text-muted">Sin comentarios.</div>
         {% endif %}
       </div>
 
-      {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" or request.user.rol.nombre == "Supervisor" %}
+      {% if request.user.is_superuser %}
       <div class="card-footer text-right">
-        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-sm">
-          <i class="fe fe-clock mr-1"></i> Ver historial
+        <a href="{% url 'tarea_historial' tarea.pk %}?next={{ request.get_full_path|urlencode }}"
+          class="btn btn-outline-secondary btn-sm">
+          <i class="fe fe-clock mr-1"></i> Historial
+        </a>
+      </div>
+      {% elif request.user.rol and request.user.rol.nombre == "Gerente" %}
+      <div class="card-footer text-right">
+        <a href="{% url 'tarea_historial' tarea.pk %}?next={{ request.get_full_path|urlencode }}"
+          class="btn btn-outline-secondary btn-sm">
+          <i class="fe fe-clock mr-1"></i> Historial
+        </a>
+      </div>
+      {% elif request.user.rol and request.user.rol.nombre == "Supervisor" %}
+      <div class="card-footer text-right">
+        <a href="{% url 'tarea_historial' tarea.pk %}?next={{ request.get_full_path|urlencode }}"
+          class="btn btn-outline-secondary btn-sm">
+          <i class="fe fe-clock mr-1"></i> Historial
         </a>
       </div>
       {% endif %}
@@ -131,7 +175,65 @@
   </div>
 
   <!-- Columna lateral solo para Gerente/Supervisor/Superuser -->
-  {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" or request.user.rol.nombre == "Supervisor" %}
+  {% if request.user.is_superuser %}
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><strong>Información</strong></div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="text-muted small">Creada</div>
+          <div>{{ tarea.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div>
+          <div class="text-muted small">Última actualización</div>
+          <div>{{ tarea.updated_at|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><strong>Acciones</strong></div>
+      <div class="card-body">
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-block mb-2">
+          <i class="fe fe-edit mr-1"></i> Editar tarea
+        </a>
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-block">
+          <i class="fe fe-clock mr-1"></i> Ver historial
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% elif request.user.rol and request.user.rol.nombre == "Gerente" %}
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><strong>Información</strong></div>
+      <div class="card-body">
+        <div class="mb-2">
+          <div class="text-muted small">Creada</div>
+          <div>{{ tarea.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+        <div>
+          <div class="text-muted small">Última actualización</div>
+          <div>{{ tarea.updated_at|date:"d/m/Y H:i" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><strong>Acciones</strong></div>
+      <div class="card-body">
+        <a href="{% url 'tarea_update' tarea.pk %}" class="btn btn-primary btn-block mb-2">
+          <i class="fe fe-edit mr-1"></i> Editar tarea
+        </a>
+        <a href="{% url 'tarea_historial' tarea.pk %}" class="btn btn-outline-secondary btn-block">
+          <i class="fe fe-clock mr-1"></i> Ver historial
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% elif request.user.rol and request.user.rol.nombre == "Supervisor" %}
   <div class="col-lg-4">
     <div class="card mb-3">
       <div class="card-header"><strong>Información</strong></div>

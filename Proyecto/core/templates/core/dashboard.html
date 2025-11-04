@@ -9,81 +9,80 @@
       <h5 class="mb-0">Dashboard</h5>
     </div>
 
-    <!-- ====== FILA 1: Gráficos ====== -->
-    <div class="row">
-      <!-- Tareas por estado -->
-      <div class="col-12 col-xl-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center">
-            <i class="fe fe-pie-chart mr-2"></i><strong>Tareas por estado</strong>
-            <span class="ml-auto small text-muted">Atrasadas: {{ tareas_atrasadas|default:"0" }}</span>
-          </div>
-          <div class="card-body">
-            <div style="height: 260px;">
-              <canvas id="chartTareasEstado"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tareas por departamento -->
-      <div class="col-12 col-xl-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center">
-            <i class="fe fe-bar-chart-2 mr-2"></i><strong>Tareas por departamento</strong>
-          </div>
-          <div class="card-body">
-            <div style="height: 260px;">
-              <canvas id="chartTareasDepto"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== FILA 2: Gráficos ====== -->
-    <div class="row">
-      <!-- Usuarios por rol -->
-      <div class="col-12 col-xl-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center">
-            <i class="fe fe-users mr-2"></i><strong>Usuarios por rol</strong>
-          </div>
-          <div class="card-body">
-            <div style="height: 260px;">
-              <canvas id="chartUsuariosRol"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top 10 trabajadores por promedio -->
-      <div class="col-12 col-xl-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center">
-            <i class="fe fe-award mr-2"></i><strong>Top 10 trabajadores por promedio</strong>
-          </div>
-          <div class="card-body">
-            <div style="height: 260px;">
-              <canvas id="chartTopPromedio"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ====== FILA 3 (opcional): Tareas por estado por departamento (barras múltiples) ====== -->
-    {% if tareas_por_depto_estado %}
+    <!-- ========== FILA 1: Tareas por estado (siempre a lo ancho) ========== -->
     <div class="row">
       <div class="col-12 mb-3">
         <div class="card h-100">
           <div class="card-header d-flex align-items-center">
-            <i class="fe fe-layers mr-2"></i><strong>Tareas por estado por departamento</strong>
-            <span class="ml-auto small text-muted">Barras múltiples</span>
+            <i class="fe fe-bar-chart-2 mr-2"></i><strong>Tareas por estado</strong>
+            <span class="ml-auto small text-muted">Atrasadas: {{ tareas_atrasadas|default:"0" }}</span>
           </div>
           <div class="card-body">
             <div style="height: 320px;">
-              <canvas id="chartEstadoPorDepto"></canvas>
+              <canvas id="chartTareasEstado"></canvas>
+            </div>
+
+            <!-- Leyenda que COINCIDE con el gráfico -->
+            <div id="legendTareasEstado" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== FILA 2: Rol + Top Trabajadores (Gerente) | Top Trabajadores solo (Supervisor) ========== -->
+    <div class="row">
+      {% if request.user.is_superuser or role_name == "Gerente" %}
+        <div class="col-12 col-xl-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="fe fe-users mr-2"></i><strong>Usuarios por rol</strong>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px;">
+                <canvas id="chartUsuariosRol"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-xl-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="fe fe-award mr-2"></i><strong>Top 5 trabajadores por promedio</strong>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px;">
+                <canvas id="chartTopTrab"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="col-12 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="fe fe-award mr-2"></i><strong>Top 5 trabajadores por promedio</strong>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px;">
+                <canvas id="chartTopTrab"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- ========== FILA 3: Top Supervisores centrado (solo Gerente/SU) ========== -->
+    {% if request.user.is_superuser or role_name == "Gerente" %}
+    <div class="row">
+      <div class="col-12 col-xl-8 offset-xl-2 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-award mr-2"></i><strong>Top 5 supervisores por promedio</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 320px;">
+              <canvas id="chartTopSup"></canvas>
             </div>
           </div>
         </div>
@@ -91,107 +90,153 @@
     </div>
     {% endif %}
 
-    <!-- ====== TABLAS ====== -->
-    <div class="card mb-3">
-      <div class="card-header"><strong>Usuarios por rol</strong></div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="thead-light">
-              <tr><th>Rol</th><th class="text-right">Total</th></tr>
-            </thead>
-            <tbody>
-              {% for r in usuarios_por_rol %}
-                <tr>
-                  <td class="align-middle">{{ r.rol__nombre|default:"(Sin rol)" }}</td>
-                  <td class="align-middle text-right">{{ r.total }}</td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    <!-- ========== TABLAS ========== -->
+    <!-- Tareas por estado (desglose por rol si Gerente/SU) -->
+    <div class="row">
+      <div class="col-12 mb-3">
+        <div class="card h-100">
+          <div class="card-header"><strong>Tareas por estado</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  {% if request.user.is_superuser or role_name == "Gerente" %}
+                  <tr>
+                    <th>Estado</th>
+                    <th class="text-right">Trabajadores</th>
+                    <th class="text-right">Supervisores</th>
+                    <th class="text-right">Total</th>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <th>Estado</th>
+                    <th class="text-right">Trabajadores</th>
+                  </tr>
+                  {% endif %}
+                </thead>
+                <tbody>
+                  {% for fila in tabla_estado %}
+                    {% if request.user.is_superuser or role_name == "Gerente" %}
+                    <tr>
+                      <td class="align-middle">{{ fila.estado }}</td>
+                      <td class="align-middle text-right">{{ fila.trab }}</td>
+                      <td class="align-middle text-right">{{ fila.sup }}</td>
+                      <td class="align-middle text-right">{{ fila.total }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                      <td class="align-middle">{{ fila.estado }}</td>
+                      <td class="align-middle text-right">{{ fila.trab }}</td>
+                    </tr>
+                    {% endif %}
+                  {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="card mb-3">
-      <div class="card-header"><strong>Tareas por estado</strong></div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="thead-light">
-              <tr><th>Estado</th><th class="text-right">Total</th></tr>
-            </thead>
-            <tbody>
-              {% for t in tareas_por_estado %}
-                <tr>
-                  <td class="align-middle">{{ t.estado }}</td>
-                  <td class="align-middle text-right">{{ t.total }}</td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      {% if request.user.is_superuser or role_name == "Gerente" %}
+      <!-- Usuarios por rol -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header"><strong>Usuarios por rol</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr><th>Rol</th><th class="text-right">Total</th></tr>
+                </thead>
+                <tbody>
+                  {% for r in usuarios_por_rol %}
+                  <tr>
+                    <td class="align-middle">{{ r.rol__nombre|default:"(Sin rol)" }}</td>
+                    <td class="align-middle text-right">{{ r.total }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+      {% endif %}
 
-    <div class="card mb-3">
-      <div class="card-header"><strong>Tareas por departamento</strong></div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="thead-light">
-              <tr><th>Departamento</th><th class="text-right">Total</th></tr>
-            </thead>
-            <tbody>
-              {% for d in tareas_por_depto %}
-                <tr>
-                  <td class="align-middle">{{ d.departamento__nombre }}</td>
-                  <td class="align-middle text-right">{{ d.total }}</td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      <!-- Top 5 Trabajadores -->
+      <div class="col-12 {% if request.user.is_superuser or role_name == 'Gerente' %}col-xl-6{% endif %} mb-3">
+        <div class="card h-100">
+          <div class="card-header"><strong>Top 5 trabajadores por promedio</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
+                </thead>
+                <tbody>
+                  {% for t in top_trabajadores %}
+                  <tr>
+                    <td class="align-middle">{{ t.evaluado__primer_nombre }} {{ t.evaluado__primer_apellido }}</td>
+                    <td class="align-middle">
+                      <span class="badge badge-pill
+                        {% if t.prom >= 4 %}badge-success
+                        {% elif t.prom >= 3 %}badge-warning text-dark
+                        {% else %}badge-danger{% endif %}">
+                        {{ t.prom|floatformat:2 }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-right">{{ t.total }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="card mb-1">
-      <div class="card-header"><strong>Top 10 trabajadores por promedio</strong></div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="thead-light">
-              <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Evaluaciones</th></tr>
-            </thead>
-            <tbody>
-              {% for t in top_trabajadores %}
-                <tr>
-                  <td class="align-middle">{{ t.trabajador__primer_nombre }} {{ t.trabajador__primer_apellido }}</td>
-                  <td class="align-middle">
-                    <span class="badge badge-pill
-                      {% if t.prom >= 4 %}badge-success
-                      {% elif t.prom >= 3 %}badge-warning text-dark
-                      {% else %}badge-danger{% endif %}">
-                      {{ t.prom|floatformat:2 }}
-                    </span>
-                  </td>
-                  <td class="align-middle text-right">{{ t.total }}</td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      {% if request.user.is_superuser or role_name == "Gerente" %}
+      <!-- Top 5 Supervisores -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header"><strong>Top 5 supervisores por promedio</strong></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr><th>Supervisor</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
+                </thead>
+                <tbody>
+                  {% for s in top_supervisores %}
+                  <tr>
+                    <td class="align-middle">{{ s.evaluado__primer_nombre }} {{ s.evaluado__primer_apellido }}</td>
+                    <td class="align-middle">
+                      <span class="badge badge-pill
+                        {% if s.prom >= 4 %}badge-success
+                        {% elif s.prom >= 3 %}badge-warning text-dark
+                        {% else %}badge-danger{% endif %}">
+                        {{ s.prom|floatformat:2 }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-right">{{ s.total }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
+      {% endif %}
     </div>
-
   </div>
 </div>
 {% endblock %}
@@ -202,56 +247,16 @@
 
   <script>
   (function () {
-    // ==== DATOS ====
-    var EST_labels = [{% for t in tareas_por_estado %}"{{ t.estado|default:'(sin estado)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
-    var EST_data   = [{% for t in tareas_por_estado %}{{ t.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
-
-    var DEP_labels = [{% for d in tareas_por_depto %}"{{ d.departamento__nombre|default:'(Sin depto)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
-    var DEP_data   = [{% for d in tareas_por_depto %}{{ d.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
-
-    var ROL_labels = [{% for r in usuarios_por_rol %}"{{ r.rol__nombre|default:'(Sin rol)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
-    var ROL_data   = [{% for r in usuarios_por_rol %}{{ r.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
-
-    // TOP: forzamos número JS con punto y 2 decimales
-    var TOP_labels = [
-      {% for x in top_trabajadores %}
-        "{{ x.trabajador__primer_nombre|default:''|add:' '|add:x.trabajador__primer_apellido|default:''|escapejs }}"
-        {% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ];
-    var TOP_prom = [
-      {% for x in top_trabajadores %}
-        {{ x.prom|default_if_none:0|stringformat:"0.2f" }}
-        {% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ];
-    var TOP_total = [
-      {% for x in top_trabajadores %}
-        {{ x.total|default_if_none:0 }}
-        {% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ];
-
-    // Datos para Barras múltiples (estado por departamento)
-    var DEPE_STACK_labels = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}"{{ r.departamento__nombre|default:'(Sin depto)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
-    var DEPE_STACK_pend   = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.pend|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
-    var DEPE_STACK_prog   = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.prog|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
-    var DEPE_STACK_atras  = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.atras|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
-    var DEPE_STACK_fin    = [{% if tareas_por_depto_estado %}{% for r in tareas_por_depto_estado %}{{ r.fin|default:0|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}{% endif %}];
-
-    var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
-
+    // Paleta y colores por estado — misma estética
     function colorByEstado(label) {
       switch ((label || '').toLowerCase()) {
-        case 'pendiente': return '#edc948';
-        case 'en progreso': return '#4e79a7';
-        case 'atrasada': return '#e15759';
-        case 'finalizada': return '#59a14f';
-        default: return '#bab0ab';
+        case 'pendiente':   return '#edc948'; // amarillo
+        case 'en progreso': return '#4e79a7'; // azul
+        case 'atrasada':    return '#e15759'; // rojo
+        case 'finalizada':  return '#59a14f'; // verde
+        default:            return '#bab0ab'; // gris
       }
     }
-
-    // Helper: ticks enteros (sólo para el eje numérico)
     function integerTicks() {
       return {
         beginAtZero: true,
@@ -263,41 +268,120 @@
         }
       }
     }
-
-    // ===== Gráfico: Tareas por estado (doughnut)
-    var ce = document.getElementById('chartTareasEstado');
-    if (ce && EST_labels.length) {
-      new Chart(ce.getContext('2d'), {
-        type: 'doughnut',
-        data: { labels: EST_labels, datasets: [{ data: EST_data, backgroundColor: EST_labels.map(colorByEstado) }] },
-        options: { plugins: { legend: { position: 'bottom' } }, maintainAspectRatio: false }
-      });
+    function hexToRgba(hex, a) {
+      var c = hex.replace('#','');
+      if (c.length === 3) c = c.split('').map(function(x){ return x+x; }).join('');
+      var r = parseInt(c.substr(0,2),16),
+          g = parseInt(c.substr(2,2),16),
+          b = parseInt(c.substr(4,2),16);
+      return 'rgba(' + r + ',' + g + ',' + b + ',' + (a==null?1:a) + ')';
     }
 
-    // ===== Gráfico: Tareas por departamento (bar) — enteros en eje numérico
-    var cd = document.getElementById('chartTareasDepto');
-    if (cd && DEP_labels.length) {
-      var horizontal = DEP_labels.length > 6;
-      new Chart(cd.getContext('2d'), {
+    // ===== Tareas por estado (barras múltiples)
+    var ce = document.getElementById('chartTareasEstado');
+    if (ce) {
+      var EST_labels = [{% for e in estados_labels %}"{{ e|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+      var DATA_trab  = [{% for n in tareas_estado_trab %}{{ n|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
+      var DATA_sup   = [{% for n in tareas_estado_sup %}{{ n|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+      var dsTrab = {
+        label: 'Trabajadores',
+        data: DATA_trab,
+        backgroundColor: EST_labels.map(colorByEstado),
+        borderColor: EST_labels.map(colorByEstado),
+        borderWidth: 1
+      };
+      var dsSup = {
+        label: 'Supervisores',
+        data: DATA_sup,
+        backgroundColor: EST_labels.map(function(l){ return hexToRgba(colorByEstado(l), 0.12); }),
+        borderColor: EST_labels.map(colorByEstado),
+        borderWidth: 3,
+        borderDash: [4, 3]
+      };
+      var datasets = [dsTrab];
+      var hasSup = DATA_sup.some(function(v){ return Number(v) > 0; });
+      if (hasSup) datasets.push(dsSup);
+
+      new Chart(ce.getContext('2d'), {
         type: 'bar',
-        data: {
-          labels: DEP_labels,
-          datasets: [{ data: DEP_data, backgroundColor: DEP_labels.map((_, i) => palette[i % palette.length]) }]
-        },
+        data: { labels: EST_labels, datasets: datasets },
         options: {
-          indexAxis: horizontal ? 'y' : 'x',
-          plugins: { legend: { display: false } },
-          scales: horizontal
-            ? { x: integerTicks(), y: { type: 'category' } }
-            : { x: { type: 'category' }, y: integerTicks() },
+          plugins: { legend: { display: false } }, // ocultamos leyenda nativa
+          responsive: true,
+          scales: { x: { type: 'category' }, y: integerTicks() },
           maintainAspectRatio: false
         }
       });
+
+      // ===== Leyenda HTML que coincide con el gráfico =====
+      var legendEl = document.getElementById('legendTareasEstado');
+      if (legendEl) {
+        legendEl.innerHTML = '';
+
+        // Cabecera de referencia de roles
+        var header = document.createElement('div');
+        header.className = 'small text-muted mb-2 d-flex align-items-center flex-wrap';
+
+        var legendTrab = document.createElement('div');
+        legendTrab.className = 'mr-4 d-flex align-items-center';
+        legendTrab.innerHTML =
+          '<span style="display:inline-block;width:14px;height:14px;background:#777;border:1px solid #777;border-radius:2px;margin-right:6px;"></span>' +
+          '<span>Trabajadores (relleno)</span>';
+        header.appendChild(legendTrab);
+
+        if (hasSup) {
+          var legendSup = document.createElement('div');
+          legendSup.className = 'mr-4 d-flex align-items-center';
+          legendSup.innerHTML =
+            '<span style="display:inline-block;width:14px;height:14px;background:transparent;border:2px dashed #777;border-radius:2px;margin-right:6px;"></span>' +
+            '<span>Supervisores (borde punteado)</span>';
+          header.appendChild(legendSup);
+        }
+
+        var note = document.createElement('div');
+        note.className = 'ml-auto';
+        note.innerHTML = '<span class="small text-muted">* El color representa el <strong>estado</strong>.</span>';
+        header.appendChild(note);
+
+        legendEl.appendChild(header);
+
+        // Lista por estado: cada estado muestra dos items con texto
+        var list = document.createElement('div');
+        list.className = 'd-flex flex-wrap';
+
+        EST_labels.forEach(function(label) {
+          var color = colorByEstado(label);
+
+          // Item Trabajadores — con texto
+          var itemTrab = document.createElement('div');
+          itemTrab.className = 'mr-4 mb-2 d-flex align-items-center';
+          itemTrab.innerHTML =
+            '<span style="display:inline-block;width:14px;height:14px;background:'+color+';border:1px solid '+color+';border-radius:2px;margin-right:6px;"></span>' +
+            '<span class="small">Trabajadores – '+label+'</span>';
+          list.appendChild(itemTrab);
+
+          // Item Supervisores — con texto (solo si hay serie sup)
+          if (hasSup) {
+            var itemSup = document.createElement('div');
+            itemSup.className = 'mr-4 mb-2 d-flex align-items-center';
+            itemSup.innerHTML =
+              '<span style="display:inline-block;width:14px;height:14px;background:transparent;border:2px dashed '+color+';border-radius:2px;margin-right:6px;"></span>' +
+              '<span class="small">Supervisores – '+label+'</span>';
+            list.appendChild(itemSup);
+          }
+        });
+
+        legendEl.appendChild(list);
+      }
     }
 
-    // ===== Gráfico: Usuarios por rol (bar) — enteros en eje numérico
+    // ===== Usuarios por rol (Gerente/SU)
     var cr = document.getElementById('chartUsuariosRol');
-    if (cr && ROL_labels.length) {
+    if (cr) {
+      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+      var ROL_labels = [{% for r in usuarios_por_rol %}"{{ r.rol__nombre|default:'(Sin rol)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+      var ROL_data   = [{% for r in usuarios_por_rol %}{{ r.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
       new Chart(cr.getContext('2d'), {
         type: 'bar',
         data: {
@@ -312,25 +396,23 @@
       });
     }
 
-    // ===== Gráfico: Top 10 por promedio (horizontal)
-    var ct = document.getElementById('chartTopPromedio');
-    if (ct && TOP_labels.length) {
+    // ===== Top 5 Trabajadores (horizontal)
+    var ct = document.getElementById('chartTopTrab');
+    if (ct) {
+      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+      var TOPT_labels = [{% for x in top_trabajadores %}"{{ x.evaluado__primer_nombre|default:''|add:' '|add:x.evaluado__primer_apellido|default:''|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+      var TOPT_prom   = [{% for x in top_trabajadores %}{{ x.prom|default_if_none:0|stringformat:"0.2f" }}{% if not forloop.last %},{% endif %}{% endfor %}];
+      var TOPT_total  = [{% for x in top_trabajadores %}{{ x.total|default_if_none:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
       new Chart(ct.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: TOP_labels,
-          datasets: [{
-            label: 'Promedio',
-            data: TOP_prom,
-            backgroundColor: TOP_labels.map((_, i) => palette[i % palette.length])
-          }]
+          labels: TOPT_labels,
+          datasets: [{ label: 'Promedio', data: TOPT_prom, backgroundColor: TOPT_labels.map((_, i) => palette[i % palette.length]) }]
         },
         options: {
           indexAxis: 'y',
-          scales: {
-            x: { beginAtZero: true, suggestedMax: 5 },
-            y: { type: 'category' }
-          },
+          scales: { x: { beginAtZero: true, suggestedMax: 5 }, y: { type: 'category' } },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -338,7 +420,7 @@
                 label: function(ctx) {
                   var i = ctx.dataIndex;
                   var val = Number(ctx.raw) || 0;
-                  var cnt = (TOP_total && TOP_total[i] != null) ? TOP_total[i] : '-';
+                  var cnt = (TOPT_total && TOPT_total[i] != null) ? TOPT_total[i] : '-';
                   return 'Promedio: ' + val.toFixed(2) + ' · #Eval: ' + cnt;
                 }
               }
@@ -349,26 +431,35 @@
       });
     }
 
-    // ===== Barras múltiples: Estado por departamento — NO apilado
-    var cs = document.getElementById('chartEstadoPorDepto');
-    if (cs && DEPE_STACK_labels && DEPE_STACK_labels.length) {
+    // ===== Top 5 Supervisores (horizontal)
+    var cs = document.getElementById('chartTopSup');
+    if (cs) {
+      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+      var SUP_labels = [{% for x in top_supervisores %}"{{ x.evaluado__primer_nombre|default:''|add:' '|add:x.evaluado__primer_apellido|default:''|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+      var SUP_prom   = [{% for x in top_supervisores %}{{ x.prom|default_if_none:0|stringformat:"0.2f" }}{% if not forloop.last %},{% endif %}{% endfor %}];
+      var SUP_total  = [{% for x in top_supervisores %}{{ x.total|default_if_none:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
       new Chart(cs.getContext('2d'), {
         type: 'bar',
         data: {
-          labels: DEPE_STACK_labels,
-          datasets: [
-            { label: 'Pendiente',   data: DEPE_STACK_pend,  backgroundColor: '#edc948' },
-            { label: 'En progreso', data: DEPE_STACK_prog,  backgroundColor: '#4e79a7' },
-            { label: 'Atrasada',    data: DEPE_STACK_atras, backgroundColor: '#e15759' },
-            { label: 'Finalizada',  data: DEPE_STACK_fin,   backgroundColor: '#59a14f' }
-          ]
+          labels: SUP_labels,
+          datasets: [{ label: 'Promedio', data: SUP_prom, backgroundColor: SUP_labels.map((_, i) => palette[i % palette.length]) }]
         },
         options: {
-          plugins: { legend: { position: 'bottom' } },
-          responsive: true,
-          scales: {
-            x: { type: 'category' }, // categorías (departamentos)
-            y: integerTicks()        // eje numérico en enteros
+          indexAxis: 'y',
+          scales: { x: { beginAtZero: true, suggestedMax: 5 }, y: { type: 'category' } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var i = ctx.dataIndex;
+                  var val = Number(ctx.raw) || 0;
+                  var cnt = (SUP_total && SUP_total[i] != null) ? SUP_total[i] : '-';
+                  return 'Promedio: ' + val.toFixed(2) + ' · #Eval: ' + cnt;
+                }
+              }
+            }
           },
           maintainAspectRatio: false
         }

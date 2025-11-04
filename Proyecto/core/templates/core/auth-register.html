@@ -1,105 +1,374 @@
 {% load static %}
 {% load form_tags %}
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="icon" href="favicon.ico">
-    <title>Tiny Dashboard - A Bootstrap Dashboard Template</title>
-    <!-- Simple bar CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/simplebar.css' %}">
-    <!-- Fonts CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
-    <!-- Icons CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/feather.css' %}">
-    <!-- Date Range Picker CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/daterangepicker.css' %}">
-    <!-- App CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/app-light.css' %}" id="lightTheme">
-    <link rel="stylesheet" href="{% static 'core/css/app-dark.css' %}" id="darkTheme" disabled>
-  </head>
-  <body class="light">
-    <div class="wrapper vh-100">
-      <div class="row align-items-center h-100">
-        <form class="col-lg-6 col-md-8 col-10 mx-auto" method="post">
-          {% csrf_token %}
-          <div class="mx-auto text-center my-4">
-            <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="{% url 'index' %}">
-              <img src="{% static 'core/img/logo.png' %}" alt="Logo Trackify" class="" style="height: 200px; width: 200px;">
-            </a>
-            <h2 class="my-3">Registro</h2>
-          </div>
+<html lang="es">
 
-          {% for field in form %}
-            {% if field.errors %}
-              {% for error in field.errors %}
-                <div class="alert alert-danger">{{ error }}</div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Registrarse – Trackify</title>
+
+  <!-- Simple bar CSS -->
+  <link rel="stylesheet" href="{% static 'core/css/simplebar.css' %}">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="{% static 'core/css/feather.css' %}">
+  <!-- Date Range Picker -->
+  <link rel="stylesheet" href="{% static 'core/css/daterangepicker.css' %}">
+  <!-- App CSS -->
+  <link rel="stylesheet" href="{% static 'core/css/app-light.css' %}" id="lightTheme">
+  <link rel="stylesheet" href="{% static 'core/css/app-dark.css' %}" id="darkTheme" disabled>
+</head>
+
+<body class="light">
+  <div class="wrapper vh-100">
+    <div class="row align-items-center h-100">
+      <form class="col-lg-6 col-md-8 col-10 mx-auto" method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="mx-auto text-center my-4">
+          <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="{% url 'web_login' %}">
+            <img src="{% static 'core/img/logo.png' %}" alt="Logo Trackify" style="height: 200px; width: 200px;">
+          </a>
+          <h2 class="my-3">Registro</h2>
+        </div>
+
+        {# === Mensajes flash === #}
+        {% if messages %}
+          {% for m in messages %}
+            <div class="alert alert-{{ m.tags }} mb-3">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {# === Errores no asociados a un campo === #}
+        {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}
+            <div class="alert alert-danger">{{ error }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Empresa -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="mb-3">Datos de la empresa</h6>
+            <div class="form-group">
+              <label for="{{ form.empresa_nombre.id_for_label }}">Nombre de la empresa</label>
+              {% if form.empresa_nombre.errors %}
+                {{ form.empresa_nombre|attr:"autocomplete=organization"|attr:"autofocus"|addclass:"form-control is-invalid" }}
+              {% else %}
+                {{ form.empresa_nombre|attr:"autocomplete=organization"|attr:"autofocus"|addclass:"form-control" }}
+              {% endif %}
+              {% if form.empresa_nombre.help_text %}
+                <small class="form-text text-muted">{{ form.empresa_nombre.help_text }}</small>
+              {% endif %}
+              {% for error in form.empresa_nombre.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
               {% endfor %}
-            {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos personales -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="mb-3">Datos personales</h6>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="{{ form.primer_nombre.id_for_label }}">Primer nombre</label>
+                {% if form.primer_nombre.errors %}
+                  {{ form.primer_nombre|addclass:"form-control is-invalid"|attr:"autocomplete=given-name" }}
+                {% else %}
+                  {{ form.primer_nombre|addclass:"form-control"|attr:"autocomplete=given-name" }}
+                {% endif %}
+                {% for error in form.primer_nombre.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <div class="form-group col-md-6">
+                <label for="{{ form.segundo_nombre.id_for_label }}">Segundo nombre</label>
+                {% if form.segundo_nombre.errors %}
+                  {{ form.segundo_nombre|addclass:"form-control is-invalid"|attr:"autocomplete=additional-name" }}
+                {% else %}
+                  {{ form.segundo_nombre|addclass:"form-control"|attr:"autocomplete=additional-name" }}
+                {% endif %}
+                {% for error in form.segundo_nombre.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="{{ form.primer_apellido.id_for_label }}">Primer apellido</label>
+                {% if form.primer_apellido.errors %}
+                  {{ form.primer_apellido|addclass:"form-control is-invalid"|attr:"autocomplete=family-name" }}
+                {% else %}
+                  {{ form.primer_apellido|addclass:"form-control"|attr:"autocomplete=family-name" }}
+                {% endif %}
+                {% for error in form.primer_apellido.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+              <div class="form-group col-md-6">
+                <label for="{{ form.segundo_apellido.id_for_label }}">Segundo apellido</label>
+                {% if form.segundo_apellido.errors %}
+                  {{ form.segundo_apellido|addclass:"form-control is-invalid"|attr:"autocomplete=family-name" }}
+                {% else %}
+                  {{ form.segundo_apellido|addclass:"form-control"|attr:"autocomplete=family-name" }}
+                {% endif %}
+                {% for error in form.segundo_apellido.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="{{ form.rut.id_for_label }}">RUT</label>
+                {% if form.rut.errors %}
+                  {{ form.rut|addclass:"form-control is-invalid"|attr:"autocomplete=off"|attr:"inputmode=text" }}
+                {% else %}
+                  {{ form.rut|addclass:"form-control"|attr:"autocomplete=off"|attr:"inputmode=text" }}
+                {% endif %}
+                <small id="rutFeedback" class="form-text text-muted">Ingresa tu RUT (ej: 12.345.678-5)</small>
+                {% for error in form.rut.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="form-group col-md-6">
+                <label for="{{ form.telefono.id_for_label }}">Teléfono</label>
+                {% if form.telefono.errors %}
+                  {{ form.telefono|addclass:"form-control is-invalid"|attr:"autocomplete=tel"|attr:"inputmode=tel" }}
+                {% else %}
+                  {{ form.telefono|addclass:"form-control"|attr:"autocomplete=tel"|attr:"inputmode=tel" }}
+                {% endif %}
+                {% if form.telefono.help_text %}
+                  <small class="form-text text-muted">{{ form.telefono.help_text }}</small>
+                {% endif %}
+                {% for error in form.telefono.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cuenta -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="mb-3">Cuenta</h6>
+            <div class="form-group">
+              <label for="{{ form.username.id_for_label }}">Nombre de usuario</label>
+              {% if form.username.errors %}
+                {{ form.username|addclass:"form-control is-invalid"|attr:"autocomplete=username" }}
+              {% else %}
+                {{ form.username|addclass:"form-control"|attr:"autocomplete=username" }}
+              {% endif %}
+              {% if form.username.help_text %}
+                <small class="form-text text-muted">{{ form.username.help_text }}</small>
+              {% endif %}
+              {% for error in form.username.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
 
             <div class="form-group">
-              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field|addclass:"form-control" }}
-              {% if field.help_text %}
-                <small class="form-text text-muted">{{ field.help_text }}</small>
+              <label for="{{ form.email.id_for_label }}">Email</label>
+              {% if form.email.errors %}
+                {{ form.email|addclass:"form-control is-invalid"|attr:"autocomplete=email" }}
+              {% else %}
+                {{ form.email|addclass:"form-control"|attr:"autocomplete=email" }}
               {% endif %}
+              {% for error in form.email.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
             </div>
-          {% endfor %}
 
-          {% if form.non_field_errors %}
-            {% for error in form.non_field_errors %}
-              <div class="alert alert-danger">{{ error }}</div>
-            {% endfor %}
-          {% endif %}
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="{{ form.password1.id_for_label }}">Contraseña</label>
+                <div class="position-relative">
+                  {% if form.password1.errors %}
+                    {{ form.password1|addclass:"form-control pr-5 is-invalid"|attr:"autocomplete=new-password" }}
+                  {% else %}
+                    {{ form.password1|addclass:"form-control pr-5"|attr:"autocomplete=new-password" }}
+                  {% endif %}
+                  <button type="button" class="btn btn-link p-0 position-absolute"
+                    style="top: 50%; right: 10px; transform: translateY(-50%);" data-toggle-pass="[name='password1']"
+                    aria-label="Mostrar/Ocultar contraseña">
+                    <i class="fe fe-eye"></i>
+                  </button>
+                </div>
+                {% for error in form.password1.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
 
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <p class="mb-2">Requisitos de contraseña</p>
-              <ul class="small text-muted pl-4 mb-0">
-                <li>Mínimo 8 caracteres</li>
-                <li>Al menos una letra mayúscula</li>
-                <li>Al menos un número</li>
-                <li>Al menos un carácter especial</li>
-              </ul>
+              <div class="form-group col-md-6">
+                <label for="{{ form.password2.id_for_label }}">Confirmar contraseña</label>
+                <div class="position-relative">
+                  {% if form.password2.errors %}
+                    {{ form.password2|addclass:"form-control pr-5 is-invalid"|attr:"autocomplete=new-password" }}
+                  {% else %}
+                    {{ form.password2|addclass:"form-control pr-5"|attr:"autocomplete=new-password" }}
+                  {% endif %}
+                  <button type="button" class="btn btn-link p-0 position-absolute"
+                    style="top: 50%; right: 10px; transform: translateY(-50%);" data-toggle-pass="[name='password2']"
+                    aria-label="Mostrar/Ocultar contraseña">
+                    <i class="fe fe-eye"></i>
+                  </button>
+                </div>
+                {% for error in form.password2.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="row mb-1">
+              <div class="col-md-12">
+                <p class="mb-2">Requisitos de contraseña</p>
+                <ul class="small text-muted pl-4 mb-0">
+                  <li>Mínimo 8 caracteres</li>
+                  <li>Al menos una letra</li>
+                  <li>Al menos un número</li>
+                  <li>Al menos un carácter especial</li>
+                </ul>
+              </div>
             </div>
           </div>
+        </div>
 
-          <button class="btn btn-lg btn-primary btn-block" type="submit">Registrarse</button>
-          
-          <p class="mt-3 text-center">
-            <a href="{% url 'web_login' %}" class="text-muted">Ya tengo cuenta</a>
-          </p>
-          
-          <p class="mt-5 mb-3 text-muted text-center">© 2025 Trackify</p>
-        </form>
-      </div>
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Registrarse</button>
+
+        <p class="mt-3 text-center">
+          <a href="{% url 'web_login' %}" class="text-muted">Ya tengo cuenta</a>
+        </p>
+
+        <p class="mt-4 mb-3 text-muted text-center">© 2025 Trackify</p>
+      </form>
     </div>
-    <script src="{% static 'core/js/jquery.min.js' %}"></script>
-    <script src="{% static 'core/js/popper.min.js' %}"></script>
-    <script src="{% static 'core/js/moment.min.js' %}"></script>
-    <script src="{% static 'core/js/bootstrap.min.js' %}"></script>
-    <script src="{% static 'core/js/simplebar.min.js' %}"></script>
-    <script src="{% static 'core/js/daterangepicker.js' %}"></script>
-    <script src="{% static 'core/js/jquery.stickOnScroll.js' %}"></script>
-    <script src="{% static 'core/js/tinycolor-min.js' %}"></script>
-    <script src="{% static 'core/js/config.js' %}"></script>
-    <script src="{% static 'core/js/apps.js' %}"></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-56159088-1"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
+  </div>
 
-      function gtag()
-      {
-        dataLayer.push(arguments);
+  <script src="{% static 'core/js/jquery.min.js' %}"></script>
+  <script src="{% static 'core/js/popper.min.js' %}"></script>
+  <script src="{% static 'core/js/moment.min.js' %}"></script>
+  <script src="{% static 'core/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'core/js/simplebar.min.js' %}"></script>
+  <script src="{% static 'core/js/daterangepicker.js' %}"></script>
+  <script src="{% static 'core/js/jquery.stickOnScroll.js' %}"></script>
+  <script src="{% static 'core/js/tinycolor-min.js' %}"></script>
+  <script src="{% static 'core/js/config.js' %}"></script>
+  <script src="{% static 'core/js/apps.js' %}"></script>
+  <script>
+  // ===== Toggle mostrar/ocultar contraseña =====
+  (function() {
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-toggle-pass]');
+      if (!btn) return;
+      const selector = btn.getAttribute('data-toggle-pass');
+      const input = document.querySelector(selector);
+      if (!input) return;
+
+      const isText = input.getAttribute('type') === 'text';
+      input.setAttribute('type', isText ? 'password' : 'text');
+
+      // Cambia icono
+      const icon = btn.querySelector('i');
+      if (icon) icon.className = isText ? 'fe fe-eye' : 'fe fe-eye-off';
+    }, false);
+  })();
+
+  // ===== Formateo y validación de RUT (Chile) en vivo =====
+  (function() {
+    const input = document.querySelector("input[name='rut']");
+    if (!input) return;
+    const feedback = document.getElementById('rutFeedback');
+
+    function cleanRut(value) {
+      return (value || '')
+        .replace(/[^0-9kK]/g, '')
+        .toUpperCase();
+    }
+
+    function formatRut(value) {
+      const v = cleanRut(value);
+      if (v.length <= 1) return v;
+      const cuerpo = v.slice(0, -1);
+      const dv = v.slice(-1);
+      let cuerpoFmt = '';
+      let j = 0;
+      for (let i = cuerpo.length - 1; i >= 0; i--) {
+        cuerpoFmt = cuerpo[i] + cuerpoFmt;
+        j++;
+        if (j % 3 === 0 && i !== 0) cuerpoFmt = '.' + cuerpoFmt;
       }
-      gtag('js', new Date());
-      gtag('config', 'UA-56159088-1');
-    </script>
-  </body>
-</html>
+      return `${cuerpoFmt}-${dv}`;
+    }
+
+    function dvRut(cuerpo) {
+      let suma = 0, multiplo = 2;
+      for (let i = cuerpo.length - 1; i >= 0; i--) {
+        suma += parseInt(cuerpo[i], 10) * multiplo;
+        multiplo = multiplo === 7 ? 2 : multiplo + 1;
+      }
+      const resto = suma % 11;
+      const dv = 11 - resto;
+      if (dv === 11) return '0';
+      if (dv === 10) return 'K';
+      return String(dv);
+    }
+
+    function isRutValid(value) {
+      const v = cleanRut(value);
+      if (v.length < 2) return false;
+      const cuerpo = v.slice(0, -1);
+      const dv = v.slice(-1);
+      if (!/^\d+$/.test(cuerpo)) return false;
+      const esperado = dvRut(cuerpo);
+      return dv.toUpperCase() === esperado;
+    }
+
+    function setValidState(ok) {
+      input.classList.remove('is-valid', 'is-invalid');
+      if (ok === true) {
+        input.classList.add('is-valid');
+        if (feedback) {
+          feedback.classList.remove('text-danger');
+          feedback.classList.add('text-success');
+          feedback.textContent = 'RUT válido';
+        }
+      } else if (ok === false) {
+        input.classList.add('is-invalid');
+        if (feedback) {
+          feedback.classList.remove('text-success');
+          feedback.classList.add('text-danger');
+          feedback.textContent = 'RUT inválido';
+        }
+      } else {
+        if (feedback) {
+          feedback.classList.remove('text-success', 'text-danger');
+          feedback.textContent = 'Ingresa tu RUT (ej: 12.345.678-5)';
+        }
+      }
+    }
+
+    input.addEventListener('input', function() {
+      const before = input.value;
+      input.value = formatRut(before);
+      const ok = cleanRut(input.value).length >= 2 ? isRutValid(input.value) : null;
+      setValidState(ok);
+      input.setSelectionRange(input.value.length, input.value.length);
+    });
+
+    if (input.value) {
+      input.value = formatRut(input.value);
+      const ok = cleanRut(input.value).length >= 2 ? isRutValid(input.value) : null;
+      setValidState(ok);
+    }
+  })();
+  </script>
 </body>
+
 </html>

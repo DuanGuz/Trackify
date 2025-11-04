@@ -11,9 +11,15 @@
       <h5 class="mb-0">
         <i class="fe fe-check-square mr-1"></i> Cambiar estado
       </h5>
+      {% if request.user.is_superuser or request.user.rol.nombre == "Trabajador" %}
       <a href="{% url 'tarea_list_trab' %}" class="btn btn-light btn-sm ml-auto">
         <i class="fe fe-arrow-left mr-1"></i> Volver
       </a>
+      {% elif request.user.is_superuser or request.user.rol.nombre == "Supervisor" %}
+      <a href="{% url 'tarea_list_supervisor_mias' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver
+      </a>
+      {% endif %}
     </div>
 
     <!-- Info de la tarea -->
@@ -39,9 +45,15 @@
           {{ form|crispy }}
 
           <div class="d-flex justify-content-end mt-4">
+            {% if request.user.is_superuser or request.user.rol.nombre == "Trabajador" %}
             <a href="{% url 'tarea_list_trab' %}" class="btn btn-light mr-2">
               <i class="fe fe-x"></i> Cancelar
             </a>
+            {% elif request.user.is_superuser or request.user.rol.nombre == "Supervisor" %}
+            <a href="{% url 'tarea_list_supervisor_mias' %}" class="btn btn-light mr-2">
+              <i class="fe fe-x"></i> Cancelar
+            </a>          
+            {% endif %}
             <button type="submit" class="btn btn-primary">
               <i class="fe fe-save mr-1"></i> Actualizar
             </button>

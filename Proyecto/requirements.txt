@@ -9,3 +9,5 @@ openpyxl
 xhtml2pdf
 twilio
 django-extensions 
+mercadopago
+python-dotenv

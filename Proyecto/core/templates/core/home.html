@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+{% with rn=request.user.rol.nombre %}
 <div class="row">
   <!-- Saludo -->
   <div class="col-12">
@@ -11,8 +12,10 @@
     </div>
   </div>
 
-  {# KPIs / Contadores (opcionales, si los pasas desde la vista) #}
-  {% if request.user.is_superuser or request.user.rol.nombre == "Recursos humanos" %}
+  {# =========================KPIs POR ROL ========================= #}
+
+  {# --- RRHH --- #}
+  {% if request.user.is_superuser or rn == "Recursos humanos" %}
     <div class="col-12 col-md-4">
       <div class="card shadow-sm mb-3">
         <div class="card-body d-flex align-items-center">
@@ -39,20 +42,63 @@
     </div>
   {% endif %}
 
-  <div class="col-12 col-md-4">
-    <div class="card shadow-sm mb-3">
-      <div class="card-body d-flex align-items-center">
-        <i class="fe fe-check-square mr-3"></i>
-        <div>
-          <div class="small text-muted">Tareas pendientes</div>
-          <div class="h5 mb-0">{{ tareas_pendientes_count|default:"—" }}</div>
+  {# --- Gerente / Supervisor --- #}
+  {% if request.user.is_superuser or rn == "Gerente" or rn == "Supervisor" %}
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="fe fe-check-square mr-3"></i>
+          <div>
+            <div class="small text-muted">Tareas (total)</div>
+            <div class="h5 mb-0">{{ tareas_total_count|default:"—" }}</div>
+          </div>
+          <a href="{% url 'tarea_list_gs' %}" class="ml-auto btn btn-sm btn-outline-primary">Ver</a>
         </div>
-        <a href="{% url 'perfil' %}" class="ml-auto btn btn-sm btn-outline-primary">Mi perfil</a>
       </div>
     </div>
-  </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="fe fe-alert-triangle mr-3"></i>
+          <div>
+            <div class="small text-muted">Tareas atrasadas</div>
+            <div class="h5 mb-0">{{ tareas_atrasadas_count|default:"—" }}</div>
+          </div>
+          <a href="{% url 'reporte_tareas' %}?estado=Atrasada" class="ml-auto btn btn-sm btn-outline-danger">Ver</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="fe fe-loader mr-3"></i>
+          <div>
+            <div class="small text-muted">En progreso</div>
+            <div class="h5 mb-0">{{ tareas_en_progreso_count|default:"—" }}</div>
+          </div>
+          <a href="{% url 'tarea_list_gs' %}?estado=En+progreso" class="ml-auto btn btn-sm btn-outline-primary">Ver</a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
-  <!-- Accesos rápidos (role-aware) -->
+  {# --- Trabajador --- #}
+  {% if request.user.is_superuser or rn == "Trabajador" %}
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body d-flex align-items-center">
+          <i class="fe fe-clock mr-3"></i>
+          <div>
+            <div class="small text-muted">Mis tareas pendientes</div>
+            <div class="h5 mb-0">{{ mis_tareas_pendientes_count|default_if_none:"0" }}</div>
+          </div>
+          <a href="{% url 'tarea_list_trab' %}" class="ml-auto btn btn-sm btn-outline-primary">Ver</a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {# =========================    ACCESOS RÁPIDOS    ========================= #}
   <div class="col-12">
     <div class="card shadow-sm mb-4">
       <div class="card-body">
@@ -60,7 +106,8 @@
           <h6 class="mb-0">Accesos rápidos</h6>
         </div>
         <div class="d-flex flex-wrap">
-          {% if request.user.is_superuser or request.user.rol.nombre == "Recursos humanos" %}
+          {# RRHH #}
+          {% if request.user.is_superuser or rn == "Recursos humanos" %}
             <a href="{% url 'user_create' %}" class="btn btn-light mr-2 mb-2">
               <i class="fe fe-user-plus mr-1"></i> Crear usuario
             </a>
@@ -74,6 +121,33 @@
               <i class="fe fe-grid mr-1"></i> Ver departamentos
             </a>
           {% endif %}
+
+          {# Gerente / Supervisor #}
+          {% if request.user.is_superuser or rn == "Gerente" or rn == "Supervisor" %}
+            <a href="{% url 'tarea_create' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-plus mr-1"></i> Nueva tarea
+            </a>
+            <a href="{% url 'tarea_list_gs' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-list mr-1"></i> Ver tareas
+            </a>
+            <a href="{% url 'eval_create' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-award mr-1"></i> Nueva evaluación
+            </a>
+            <a href="{% url 'eval_list_gs' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-clipboard mr-1"></i> Ver evaluaciones
+            </a>
+            <a href="{% url 'reporte_tareas' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-file-text mr-1"></i> Reporte de tareas
+            </a>
+            <a href="{% url 'reporte_evaluaciones' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-pie-chart mr-1"></i> Reporte de evaluaciones
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-light mr-2 mb-2">
+              <i class="fe fe-bar-chart-2 mr-1"></i> Dashboard
+            </a>
+          {% endif %}
+
+          {# Todos los roles #}
           <a href="{% url 'perfil' %}" class="btn btn-light mr-2 mb-2">
             <i class="fe fe-user mr-1"></i> Mi perfil
           </a>
@@ -85,57 +159,164 @@
     </div>
   </div>
 
-  <!-- Mis tareas (tabla simple; pásale 'mis_tareas' desde la vista) -->
-  <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table mb-0">
-            <thead class="thead-light">
-              <tr>
-                <th>Tarea</th>
-                <th>Departamento</th>
-                <th>Estado</th>
-                <th>Fecha límite</th>
-                <th class="text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for t in mis_tareas %}
-              <tr>
-                <td class="align-middle">{{ t.titulo }}</td>
-                <td class="align-middle text-muted">{{ t.departamento.nombre }}</td>
-                <td class="align-middle">
-                  {% if t.estado == "pendiente" %}
-                    <span class="badge badge-warning text-dark">Pendiente</span>
-                  {% elif t.estado == "en_progreso" %}
-                    <span class="badge badge-info">En progreso</span>
-                  {% elif t.estado == "completada" %}
-                    <span class="badge badge-success">Completada</span>
-                  {% else %}
-                    <span class="badge badge-secondary">{{ t.estado }}</span>
-                  {% endif %}
-                </td>
-                <td class="align-middle">{{ t.fecha_limite|date:"d/m/Y" }}</td>
-                <td class="align-middle text-right">
-                  <a href="{% url 'tarea_detail' t.id %}" class="btn btn-sm btn-outline-primary">
-                    <i class="fe fe-eye"></i> Ver
-                  </a>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="5" class="text-center text-muted py-4">
-                  No tienes tareas asignadas por ahora.
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+  {# =========================     TABLAS POR ROL     ========================= #}
+
+  {# Gerente / Supervisor: últimas tareas #}
+  {% if request.user.is_superuser or rn == "Gerente" or rn == "Supervisor" %}
+    <div class="col-12">
+      <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex align-items-center">
+          <strong>Últimas tareas</strong>
+          <a href="{% url 'tarea_list_gs' %}" class="btn btn-sm btn-light ml-auto">Ver todas</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>Tarea</th>
+                  <th>Departamento</th>
+                  <th>Asignado</th>
+                  <th>Estado</th>
+                  <th>Vence</th>
+                  <th class="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in tareas_recent %}
+                  <tr>
+                    <td class="align-middle">{{ t.titulo }}</td>
+                    <td class="align-middle text-muted">{{ t.departamento.nombre }}</td>
+                    <td class="align-middle">{{ t.asignado.primer_nombre }} {{ t.asignado.primer_apellido }}</td>
+                    <td class="align-middle">
+                      {% if t.estado == "Pendiente" %}
+                        <span class="badge badge-warning text-dark">Pendiente</span>
+                      {% elif t.estado == "En progreso" %}
+                        <span class="badge badge-info">En progreso</span>
+                      {% elif t.estado == "Atrasada" %}
+                        <span class="badge badge-danger">Atrasada</span>
+                      {% elif t.estado == "Finalizada" %}
+                        <span class="badge badge-success">Finalizada</span>
+                      {% else %}
+                        <span class="badge badge-secondary">{{ t.estado }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="align-middle">{{ t.fecha_limite|date:"d/m/Y" }}</td>
+                    <td class="align-middle text-right">
+                      <a href="{% url 'tarea_detail' t.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fe fe-eye"></i> Ver
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Sin tareas recientes.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  {% endif %}
+
+  {# Trabajador: mis tareas #}
+  {% if request.user.is_superuser or rn == "Trabajador" %}
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex align-items-center">
+          <strong>Mis tareas</strong>
+          <a href="{% url 'tarea_list_trab' %}" class="btn btn-sm btn-light ml-auto">Ver todas</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>Tarea</th>
+                  <th>Departamento</th>
+                  <th>Estado</th>
+                  <th>Fecha límite</th>
+                  <th class="text-right">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in mis_tareas %}
+                <tr>
+                  <td class="align-middle">{{ t.titulo }}</td>
+                  <td class="align-middle text-muted">{{ t.departamento.nombre }}</td>
+                  <td class="align-middle">
+                    {% if t.estado == "Pendiente" %}
+                      <span class="badge badge-warning text-dark">Pendiente</span>
+                    {% elif t.estado == "En progreso" %}
+                      <span class="badge badge-info">En progreso</span>
+                    {% elif t.estado == "Atrasada" %}
+                      <span class="badge badge-danger">Atrasada</span>
+                    {% elif t.estado == "Finalizada" %}
+                      <span class="badge badge-success">Finalizada</span>
+                    {% else %}
+                      <span class="badge badge-secondary">{{ t.estado }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="align-middle">{{ t.fecha_limite|date:"d/m/Y" }}</td>
+                  <td class="align-middle text-right">
+                    <a href="{% url 'tarea_detail' t.id %}" class="btn btn-sm btn-outline-primary">
+                      <i class="fe fe-eye"></i> Ver
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">No tienes tareas asignadas por ahora.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {# RRHH: últimos usuarios #}
+  {% if request.user.is_superuser or rn == "Recursos humanos" %}
+    {% if ultimos_usuarios %}
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex align-items-center">
+            <strong>Últimos usuarios creados</strong>
+            <a href="{% url 'user_list' %}" class="btn btn-sm btn-light ml-auto">Ver todos</a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table mb-0">
+                <thead class="thead-light">
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Usuario</th>
+                    <th>Rol</th>
+                    <th>Creado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for u in ultimos_usuarios %}
+                    <tr>
+                      <td class="align-middle">{{ u.primer_nombre }} {{ u.primer_apellido }}</td>
+                      <td class="align-middle text-muted">{{ u.username }}</td>
+                      <td class="align-middle">{{ u.rol.nombre|default:"(sin rol)" }}</td>
+                      <td class="align-middle">{{ u.created_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
 
 </div>
+{% endwith %}
 {% endblock %}

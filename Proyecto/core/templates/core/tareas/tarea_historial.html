@@ -9,9 +9,15 @@
     <div class="d-flex align-items-center mb-3">
       <h5 class="mb-0">Historial de Tarea</h5>
       <span class="ml-3 text-muted d-none d-sm-inline">“{{ tarea.titulo }}”</span>
+      {% if request.user.is_superuser or request.user.rol.nombre == "Gerente" %}
       <a href="{% url 'tarea_list_gs' %}" class="btn btn-light btn-sm ml-auto">
         <i class="fe fe-arrow-left mr-1"></i> Volver
       </a>
+      {% elif request.user.is_superuser or request.user.rol.nombre == "Supervisor" %}
+      <a href="{% url 'tarea_list_supervisor_equipo' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver
+      </a>
+      {% endif %}
     </div>
 
     <!-- Tabla de historial -->

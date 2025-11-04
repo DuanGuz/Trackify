@@ -12,9 +12,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -25,10 +27,25 @@ SECRET_KEY = "django-insecure-z2j9r86bo581dw0192ki1tq(a6@(cf5eyt7ax%l_-9=8ocsi8)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+NGROK_DOMAIN = os.environ.get("NGROK_DOMAIN", "").strip()  # ej: https://xxxxx.ngrok-free.dev
+NGROK_HOST = NGROK_DOMAIN.replace("https://", "").replace("http://", "")
 
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    NGROK_HOST,  # dominio ngrok sin https://
+]
+
+# Django 4+ necesita esto para cookies/CSRF tras HTTPS externo:
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    NGROK_DOMAIN,  # dominio con https://
+]
 
 # Application definition
+# Reenvío seguro cuando pasamos por ngrok/proxy
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 INSTALLED_APPS = [
     'admin_interface',
@@ -148,9 +165,12 @@ REST_FRAMEWORK = {
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-LOGIN_REDIRECT_URL = "home"
+LOGIN_REDIRECT_URL = "/home/"
 
+LOGIN_URL = '/login/'
 
+# Cuando hace logout y vuelve al login
+LOGOUT_REDIRECT_URL = '/login/'
 # --- SMS Settings (Twilio) ---
 SMS_BACKEND = "twilio"  # << activar envío real
 TWILIO_ACCOUNT_SID   = "ACb4d8aae8b6551e231a371f7651dc0532"
@@ -159,5 +179,26 @@ TWILIO_FROM_NUMBER   = "+18254623871"   # tu número de Twilio en formato E.164
 # (opcional) si usas Messaging Service:
 #TWILIO_MESSAGING_SERVICE_SID = os.getenv("TWILIO_MESSAGING_SERVICE_SID", "")
 
-#comentario para subir el github
-#comentario extra
+
+# === Mercado Pago ===
+MERCADOPAGO_ACCESS_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN", "")
+MERCADOPAGO_PUBLIC_KEY = os.getenv("MERCADOPAGO_PUBLIC_KEY", "")
+MERCADOPAGO_ENV = os.getenv("MERCADOPAGO_ENV", "test")
+MERCADOPAGO_TEST_BUYER_EMAIL = os.getenv("MERCADOPAGO_TEST_BUYER_EMAIL", "")
+
+MERCADOPAGO_SUCCESS_URL = os.getenv(
+    "MERCADOPAGO_SUCCESS_URL", "http://127.0.0.1:8000/billing/success/"
+)
+MERCADOPAGO_FAILURE_URL = os.getenv(
+    "MERCADOPAGO_FAILURE_URL", "http://127.0.0.1:8000/billing/failure/"
+)
+MERCADOPAGO_PENDING_URL = os.getenv(
+    "MERCADOPAGO_PENDING_URL", "http://127.0.0.1:8000/billing/pending/"
+)
+MERCADOPAGO_WEBHOOK_URL = os.getenv(
+    "MERCADOPAGO_WEBHOOK_URL", "http://127.0.0.1:8000/webhooks/mercadopago/"
+)
+MERCADOPAGO_BACK_URL = os.getenv("MERCADOPAGO_BACK_URL", "http://127.0.0.1:8000/")
+
+# === Webhook Secret ===
+WEBHOOK_SHARED_SECRET = os.getenv("WEBHOOK_SHARED_SECRET", "")

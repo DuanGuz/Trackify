@@ -65,7 +65,7 @@
                   <span class="badge badge-pill badge-info">{{ d.total_tareas|default:"0" }}</span>
                 </td>
                 <td class="align-middle text-right">
-                  <span class="badge badge-pill badge-success">{{ d.total_personas|default:"0" }}</span> {# ← NUEVO #}
+                  <span class="badge badge-pill badge-success">{{ d.total_miembros|default:"0" }}</span> {# ← NUEVO #}
                 </td>
                 <td class="align-middle text-right">
                   <a href="{% url 'departamento_update' d.pk %}" class="btn btn-sm btn-outline-primary">

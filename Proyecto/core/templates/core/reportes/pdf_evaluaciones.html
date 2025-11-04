@@ -19,8 +19,8 @@
     </tr>
     {% for e in evaluaciones %}
     <tr>
-        <td>{{ e.trabajador.primer_nombre }} {{ e.trabajador.primer_apellido }}</td>
-        <td>{{ e.supervisor.primer_nombre }} {{ e.supervisor.primer_apellido }}</td>
+        <td>{{ e.evaluado.primer_nombre }} {{ e.evaluado.primer_apellido }}</td>
+        <td>{{ e.evaluador.primer_nombre }} {{ e.evaluador.primer_apellido }}</td>
         <td>{{ e.puntaje }}</td>
         <td>{{ e.created_at|date:"Y-m-d H:i" }}</td>
         <td>{{ e.comentarios|default:"—" }}</td>

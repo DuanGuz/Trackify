@@ -29,12 +29,6 @@ class TareaAdmin(admin.ModelAdmin):
     list_filter = ['estado', 'asignado']
     list_editable = ['titulo', 'descripcion', 'estado', 'asignado', 'fecha_limite']
 
-class EvaluacionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'trabajador', 'supervisor', 'puntaje', 'comentarios', 'created_at']
-    search_fields = ['trabajador__username', 'supervisor__username']
-    list_per_page = 10
-    list_filter = ['puntaje', 'supervisor', 'trabajador']
-    list_editable = ['puntaje', 'comentarios']
 
 class NotificacionAdmin(admin.ModelAdmin):
     list_display = ['id', 'usuario', 'mensaje', 'is_read', 'created_at']
@@ -57,18 +51,12 @@ class ComentarioAdmin(admin.ModelAdmin):
     list_filter = ['usuario', 'tarea']
     list_editable = ['tarea', 'usuario', 'contenido']
 
-class TurnoAdmin(admin.ModelAdmin):
-    list_display = ['id', 'usuario', 'fecha', 'hora_inicio', 'hora_fin']
-    search_fields = ['usuario__username', 'fecha']
-    list_per_page = 10
-    list_filter = ['usuario']
+
 
 # Registrar los modelos en el panel de administración
 admin.site.register(Rol, RolAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.register(Departamento, DepartamentoAdmin)
 admin.site.register(Tarea, TareaAdmin)
-admin.site.register(Evaluacion, EvaluacionAdmin)
 admin.site.register(Notificacion, NotificacionAdmin)
 admin.site.register(Comentario, ComentarioAdmin)
-admin.site.register(Turno, TurnoAdmin)
