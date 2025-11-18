@@ -1,18 +1,20 @@
 // src/AppNavigator.js
-import React, { useContext, useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { AuthContext } from './auth';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useContext, useEffect, useState } from "react";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
 
+import { AuthContext } from "./auth";
 
-import LoginScreen from './screens/LoginScreen';
-import TasksScreen from './screens/TasksScreen';
-import TaskDetailScreen from './screens/TaskDetailScreen';
-import EvaluationsScreen from './screens/EvaluationsScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import SplashOverlay from './components/SplashOverlay';
+import LoginScreen from "./screens/LoginScreen";
+import TasksScreen from "./screens/TasksScreen";
+import TaskDetailScreen from "./screens/TaskDetailScreen";
+import EvaluationsScreen from "./screens/EvaluationsScreen";
+import ProfileScreen from "./screens/ProfileScreen";
+import ChangePasswordScreen from "./screens/ChangePasswordScreen";
+import NotificationsScreen from "./screens/NotificationsScreen";
+import SplashOverlay from "./components/SplashOverlay";
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -27,8 +29,8 @@ function MainTabs() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list" size={size} color={color} />
           ),
-          headerShown: true, // Aseguramos que el header se muestra
-          title: "Tareas" // Añadimos título para que aparezca en el header
+          headerShown: true,
+          title: "Tareas",
         }}
       />
       <Tabs.Screen
@@ -39,18 +41,30 @@ function MainTabs() {
             <Ionicons name="clipboard" size={size} color={color} />
           ),
           headerShown: true,
-          title: "Evaluaciones"
+          title: "Evaluaciones",
         }}
       />
       <Tabs.Screen
-        name="Perfil"
+        name="Notificaciones"
+        component={NotificationsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications" size={size} color={color} />
+          ),
+          headerShown: true,
+          title: "Notificaciones",
+        }}
+      />
+      <Tabs.Screen
+        name="PerfilTab"
         component={ProfileScreen}
         options={{
+          tabBarLabel: "Perfil",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
           ),
           headerShown: true,
-          title: "Perfil"
+          title: "Perfil",
         }}
       />
     </Tabs.Navigator>
@@ -63,7 +77,7 @@ export default function AppNavigator() {
   const [splashMounted, setSplashMounted] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowSplash(false), 2200); // antes 1200
+    const t = setTimeout(() => setShowSplash(false), 2200);
     return () => clearTimeout(t);
   }, []);
 
@@ -82,7 +96,12 @@ export default function AppNavigator() {
             <Stack.Screen
               name="DetalleTarea"
               component={TaskDetailScreen}
-              options={{ title: 'Detalle de Tarea' }}
+              options={{ title: "Detalle de Tarea" }}
+            />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{ title: "Cambiar contraseña" }}
             />
           </Stack.Navigator>
         ) : (
@@ -90,7 +109,7 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Login"
               component={LoginScreen}
-              options={{ title: 'Ingresar' }}
+              options={{ title: "Ingresar" }}
             />
           </Stack.Navigator>
         )}
