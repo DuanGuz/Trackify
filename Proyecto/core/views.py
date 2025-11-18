@@ -15,7 +15,7 @@ from .utils import *
 from django.db.models import Q, Count, Avg, Case, When, IntegerField, Sum
 from .mixins import *
 from django.http import HttpResponse
-from django.utils.timezone import now, make_naive, localtime
+from django.utils.timezone import now, make_naive, localtime, localdate
 from datetime import datetime
 import csv
 try:
@@ -38,6 +38,13 @@ from django.views.decorators.http import require_POST
 from .utils_reports import *
 from .utils_messages import clear_messages
 from .decorators import require_gs_and_sub
+from .utils_push import send_expo_push
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Notificacion
+
 
 import logging, json
 logger = logging.getLogger(__name__)
@@ -362,24 +369,40 @@ class TareaCreateView(SuscripcionActivaRequiredMixin, SoloGerenteSupervisorMixin
         self.object = form.save(commit=False)
         self.object.estado = "Pendiente"
         self.object.creada_por = self.request.user
-        # empresa garantizada por EmpresaFormMixin, pero por si acaso:
         if not self.object.empresa_id:
             self.object.empresa = self.request.user.empresa
         self.object.save()
         if hasattr(form, "save_m2m"):
             form.save_m2m()
 
+        # Historial...
         HistorialTarea.objects.create(
             tarea=self.object,
             accion="CREADA",
             realizado_por=self.request.user,
             empresa=self.request.user.empresa
         )
-        Notificacion.objects.create(
+
+        # Notificación interna (en BD)
+        notif = Notificacion.objects.create(
             usuario=self.object.asignado,
             mensaje=f"Se te asignó la tarea: {self.object.titulo}",
             empresa=self.request.user.empresa
         )
+
+        # Push vía Expo (si el usuario tiene token)
+        token = getattr(self.object.asignado, "expo_push_token", None)
+        if token:
+            send_expo_push(
+                token,
+                title="Nueva tarea asignada",
+                body=self.object.titulo,
+                data={
+                    "tipo": "tarea",
+                    "tarea_id": self.object.id,
+                }
+            )
+
         messages.success(self.request, "Tarea creada correctamente y marcada como Pendiente.")
         return redirect(self.get_success_url())
 
@@ -783,7 +806,6 @@ class EvalCreateView(SuscripcionActivaRequiredMixin, SoloGerenteSupervisorMixin,
         return kwargs
 
     def form_valid(self, form):
-        # form ya setea evaluador y tipo en clean()
         self.object = form.save(commit=False)
         if not self.object.empresa_id:
             self.object.empresa = self.request.user.empresa
@@ -800,6 +822,20 @@ class EvalCreateView(SuscripcionActivaRequiredMixin, SoloGerenteSupervisorMixin,
             mensaje=f"Has recibido una evaluación (puntaje {self.object.puntaje}).",
             empresa=self.request.user.empresa
         )
+
+        # Push
+        token = getattr(self.object.evaluado, "expo_push_token", None)
+        if token:
+            send_expo_push(
+                token,
+                title="Nueva evaluación registrada",
+                body=f"Puntaje: {self.object.puntaje}",
+                data={
+                    "tipo": "evaluacion",
+                    "evaluacion_id": self.object.id,
+                }
+            )
+
         messages.success(self.request, "Evaluación registrada correctamente.")
         return redirect(self.get_success_url())
 
@@ -1678,14 +1714,22 @@ def password_reset_sms_change(request):
     })
 
 #Notificaciones:
-@login_required
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def notif_list_api(request):
     """
-    Devuelve las notificaciones del usuario logueado.
+    Devuelve las notificaciones del usuario autenticado.
+    Sirve para:
+      - Web (sesión Django)
+      - App móvil (JWT)
+    Mantiene la clave `items` para la web
+    y además expone `results` para la app móvil.
     """
-    qs = (Notificacion.objects
-          .filter(usuario=request.user)
-          .order_by('-created_at')[:100])
+    qs = (
+        Notificacion.objects
+        .filter(usuario=request.user)
+        .order_by('-created_at')[:100]
+    )
 
     data = []
     unread = 0
@@ -1696,28 +1740,41 @@ def notif_list_api(request):
             "id": n.id,
             "mensaje": n.mensaje,
             "is_read": n.is_read,
+            # mismo formato que ya usabas en la web
             "created_at": localtime(n.created_at).strftime("%d/%m/%Y %H:%M"),
         })
-    return JsonResponse({"items": data, "unread_count": unread})
 
-@login_required
-@require_POST
+    # 🔹 Para la web sigues usando `items` y `unread_count`
+    # 🔹 Para la app móvil puedes usar `results` y `unread_count`
+    return Response({
+        "items": data,
+        "results": data,      # alias para la app móvil
+        "unread_count": unread,
+    })
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def notif_clear_api(request):
     """
-    Marca como leídas todas las notificaciones del usuario.
+    Marca como leídas todas las notificaciones del usuario actual.
+    Compatible con web (sesión) y móvil (JWT).
     """
     Notificacion.objects.filter(usuario=request.user, is_read=False).update(is_read=True)
-    return JsonResponse({"ok": True})
+    # Mantengo el mismo payload que antes
+    return Response({"ok": True})
 
 
-@login_required
-@require_POST
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def notif_delete_all_api(request):
     """
-    Elimina todas las notificaciones del usuario.
+    Elimina todas las notificaciones del usuario actual.
+    Compatible con web (sesión) y móvil (JWT).
     """
     Notificacion.objects.filter(usuario=request.user).delete()
-    return JsonResponse({"ok": True})
+    # Mantengo el mismo payload que antes
+    return Response({"ok": True})
 
 @login_required
 @require_gs_and_sub
@@ -1802,3 +1859,256 @@ class TareaListSupervisorEquipoView(SuscripcionActivaRequiredMixin, SoloSupervis
         ctx["ESTADOS"] = ["Pendiente", "En progreso", "Atrasada", "Finalizada"]
         return ctx
     
+
+
+
+
+# ---------- Helpers de parseo ----------
+def _parse_date(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except Exception:
+        return None
+
+def _vis_qs_evals(user):
+    """
+    QS base de Evaluacion respetando empresa y visibilidad por rol.
+    """
+    rol = getattr(getattr(user, "rol", None), "nombre", "")
+    depto = getattr(user, "departamento", None)
+
+    qs = (Evaluacion.objects
+          .select_related("evaluado", "evaluador",
+                          "evaluado__rol", "evaluado__departamento",
+                          "evaluador__rol", "evaluador__departamento")
+          .filter(empresa=user.empresa))
+
+    if user.is_superuser:
+        return qs
+
+    if rol == "Gerente" and depto:
+        # Gerente ve su dpto (coherente con tu lógica previa)
+        return qs.filter(
+            Q(tipo="SUPERVISOR", evaluado__departamento=depto) |
+            Q(tipo="TRABAJADOR", evaluador__departamento=depto)
+        )
+
+    if rol == "Supervisor" and depto:
+        # Supervisor ve solo evaluaciones que él realizó (tipo TRABAJADOR)
+        return qs.filter(tipo="TRABAJADOR", evaluador=user)
+
+    # Otros roles: vacío
+    return qs.none()
+
+
+def _apply_common_eval_filters(qs, request):
+    """
+    Aplica filtros comunes: tipo (TRABAJADOR|SUPERVISOR), depto_id, fecha desde/hasta.
+    """
+    tipo = (request.GET.get("tipo") or "").strip().upper()           # "TRABAJADOR" | "SUPERVISOR" | ""
+    depto_id = (request.GET.get("depto") or "").strip()
+    f_desde = _parse_date(request.GET.get("desde") or "")
+    f_hasta = _parse_date(request.GET.get("hasta") or "")
+
+    if tipo in ("TRABAJADOR", "SUPERVISOR"):
+        qs = qs.filter(tipo=tipo)
+
+    if depto_id.isdigit():
+        # Filtramos por el depto del EVALUADO (común para ambos tipos)
+        qs = qs.filter(evaluado__departamento_id=int(depto_id))
+
+    if f_desde:
+        qs = qs.filter(created_at__date__gte=f_desde)
+    if f_hasta:
+        qs = qs.filter(created_at__date__lte=f_hasta)
+
+    return qs
+
+def _apply_common_task_filters(qs, request):
+    """
+    Filtros para tareas: depto, estado, fecha límite desde/hasta.
+    """
+    depto_id = (request.GET.get("depto") or "").strip()
+    estado = (request.GET.get("estado") or "").strip()
+    f_ini  = _parse_date(request.GET.get("f_ini") or "")
+    f_fin  = _parse_date(request.GET.get("f_fin") or "")
+
+    if depto_id.isdigit():
+        qs = qs.filter(departamento_id=int(depto_id))
+
+    if estado in ("Pendiente","En progreso","Atrasada","Finalizada"):
+        qs = qs.filter(estado=estado)
+
+    if f_ini:
+        qs = qs.filter(fecha_limite__gte=f_ini)
+    if f_fin:
+        qs = qs.filter(fecha_limite__lte=f_fin)
+
+    return qs
+
+
+# ---------- Vista HTML con filtros (la página del dashboard) ----------
+@method_decorator(login_required, name="dispatch")
+class DashboardFiltrosView(TemplateView):
+    template_name = "core/dashboard_filtros.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        u = self.request.user
+        # combos filtrados por empresa
+        ctx["departamentos"] = Departamento.objects.filter(empresa=u.empresa).order_by("nombre")
+        # valores por defecto
+        ctx["hoy"] = localdate()
+        return ctx
+
+
+# ---------- API: Top evaluados (mejores/peores) ----------
+@login_required
+def api_top_evaluados(request):
+    """
+    GET params:
+      - tipo: "TRABAJADOR" | "SUPERVISOR" (opcional)
+      - order: "desc" (mejores) | "asc" (peores). Default: "desc"
+      - limit: int (default 5)
+      - depto: id departamento (opcional)
+      - desde: YYYY-MM-DD (opcional)
+      - hasta: YYYY-MM-DD (opcional)
+    """
+    u = request.user
+    order = (request.GET.get("order") or "desc").strip().lower()
+    limit = request.GET.get("limit")
+    try:
+        limit = max(1, min(50, int(limit or 5)))
+    except Exception:
+        limit = 5
+
+    qs = _vis_qs_evals(u)
+    qs = _apply_common_eval_filters(qs, request)
+
+    # Agrupar por evaluado para Top
+    agg = (qs.values("evaluado__id",
+                     "evaluado__primer_nombre",
+                     "evaluado__primer_apellido",
+                     "evaluado__rol__nombre")
+             .annotate(prom=Avg("puntaje"), total=Count("id")))
+
+    if order == "asc":
+        agg = agg.order_by("prom", "-total")[:limit]
+    else:
+        agg = agg.order_by("-prom", "-total")[:limit]
+
+    data = [{
+        "evaluado_id": r["evaluado__id"],
+        "nombre": f'{r["evaluado__primer_nombre"]} {r["evaluado__primer_apellido"]}'.strip(),
+        "rol": r["evaluado__rol__nombre"],
+        "promedio": round(r["prom"] or 0, 2),
+        "total": r["total"],
+    } for r in agg]
+
+    return JsonResponse({"items": data})
+
+
+# ---------- API: Tareas por estado ----------
+@login_required
+def api_tareas_por_estado(request):
+    """
+    GET params:
+      - depto (opcional), estado (opcional), f_ini, f_fin
+    """
+    u = request.user
+    rol = getattr(getattr(u, "rol", None), "nombre", "")
+    depto = getattr(u, "departamento", None)
+
+    qs = Tarea.objects.select_related("departamento", "asignado").filter(empresa=u.empresa)
+
+    # visibilidad por rol
+    if u.is_superuser:
+        pass
+    elif rol == "Gerente" and depto:
+        qs = qs.filter(departamento=depto)
+    elif rol == "Supervisor" and depto:
+        qs = qs.filter(departamento=depto, asignado__rol__nombre="Trabajador")
+    else:
+        qs = qs.none()
+
+    qs = _apply_common_task_filters(qs, request)
+
+    agg = (qs.values("estado")
+             .annotate(total=Count("id"))
+             .order_by("estado"))
+
+    data = [{"estado": r["estado"], "total": r["total"]} for r in agg]
+    return JsonResponse({"items": data})
+
+
+# ---------- API: Tareas por estado y por departamento (stacked) ----------
+@login_required
+def api_tareas_estado_por_depto(request):
+    """
+    GET params:
+      - mismos que tareas-estado (depto, estado, f_ini, f_fin) pero típicamente sin 'depto'
+    """
+    u = request.user
+    rol = getattr(getattr(u, "rol", None), "nombre", "")
+    depto = getattr(u, "departamento", None)
+
+    qs = Tarea.objects.select_related("departamento").filter(empresa=u.empresa)
+
+    # visibilidad por rol
+    if u.is_superuser:
+        pass
+    elif rol == "Gerente" and depto:
+        qs = qs.filter(departamento=depto)
+    elif rol == "Supervisor" and depto:
+        qs = qs.filter(departamento=depto, asignado__rol__nombre="Trabajador")
+    else:
+        qs = qs.none()
+
+    qs = _apply_common_task_filters(qs, request)
+
+    agg = (qs.values("departamento__nombre")
+             .annotate(
+                pend = Sum(Case(When(estado="Pendiente",    then=1), default=0, output_field=IntegerField())),
+                prog = Sum(Case(When(estado="En progreso", then=1), default=0, output_field=IntegerField())),
+                atras= Sum(Case(When(estado="Atrasada",    then=1), default=0, output_field=IntegerField())),
+                fin  = Sum(Case(When(estado="Finalizada",  then=1), default=0, output_field=IntegerField())),
+             )
+             .order_by("departamento__nombre"))
+
+    data = [{
+        "departamento": r["departamento__nombre"] or "(Sin depto)",
+        "pendiente": r["pend"] or 0,
+        "en_progreso": r["prog"] or 0,
+        "atrasada": r["atras"] or 0,
+        "finalizada": r["fin"] or 0,
+    } for r in agg]
+
+    return JsonResponse({"items": data})
+
+@login_required
+def api_top_evaluados_csv(request):
+    # Reutilizamos la misma lógica del JSON:
+    u = request.user
+    order = (request.GET.get("order") or "desc").strip().lower()
+    try:
+        limit = max(1, min(200, int(request.GET.get("limit") or 50)))
+    except Exception:
+        limit = 50
+
+    qs = _vis_qs_evals(u)
+    qs = _apply_common_eval_filters(qs, request)
+
+    agg = (qs.values("evaluado__primer_nombre","evaluado__primer_apellido","evaluado__rol__nombre")
+             .annotate(prom=Avg("puntaje"), total=Count("id")))
+
+    agg = agg.order_by("prom", "-total")[:limit] if order == "asc" else agg.order_by("-prom", "-total")[:limit]
+
+    # CSV
+    resp = HttpResponse(content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = 'attachment; filename="top_evaluados.csv"'
+    w = csv.writer(resp)
+    w.writerow(["Nombre", "Rol", "Promedio", "N° Evaluaciones"])
+    for r in agg:
+        nombre = f'{r["evaluado__primer_nombre"]} {r["evaluado__primer_apellido"]}'.strip()
+        w.writerow([nombre, r["evaluado__rol__nombre"], round(r["prom"] or 0, 2), r["total"]])
+    return resp

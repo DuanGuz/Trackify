@@ -11,3 +11,4 @@ twilio
 django-extensions 
 mercadopago
 python-dotenv
+requests

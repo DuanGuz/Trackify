@@ -91,6 +91,12 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True)
     objects = CustomUserManager()
     REQUIRED_FIELDS = ["email", "empresa"]
+    expo_push_token = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Token de Expo para notificaciones push"
+    )
 
 
 

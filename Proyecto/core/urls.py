@@ -54,7 +54,12 @@ urlpatterns = [
     path('mis-evaluaciones/', EvalMisEvaluacionesView.as_view(), name='eval_list_mias'),
 
     #DASHBOARD/REPORTES:
-    path("dashboard/", DashboardView.as_view(), name="dashboard"),
+    path("dashboard/", DashboardFiltrosView.as_view(), name="dashboard_filtros"),
+    path("api/dashboard/top-evaluados/", api_top_evaluados, name="api_top_evaluados"),
+    path("api/dashboard/tareas-estado/", api_tareas_por_estado, name="api_tareas_por_estado"),
+    path("api/dashboard/tareas-estado-por-depto/", api_tareas_estado_por_depto, name="api_tareas_estado_por_depto"),
+    path("api/dashboard/top-evaluados.csv", api_top_evaluados_csv, name="api_top_evaluados_csv"),
+
     path("reportes/tareas/", ReporteTareasView.as_view(), name="reporte_tareas"),
     path("reportes/tareas/pdf/", exportar_tareas_pdf, name="reporte_tareas_pdf"),
     path("reportes/tareas/xlsx/", exportar_tareas_xlsx, name="reporte_tareas_xlsx"),
@@ -92,6 +97,16 @@ urlpatterns = [
     path("notificaciones/clear/", notif_clear_api, name="notif_clear_api"),
     path("notificaciones/delete_all/", notif_delete_all_api, name="notif_delete_all_api"),
     
+    path("api/notificaciones/", NotificacionesAPI.as_view(), name="api_notificaciones"),
+    path("api/notificaciones/marcar-leidas/", NotificacionesMarcarLeidasAPI.as_view(), name="api_notificaciones_marcar"),
+    path("api/notificaciones/borrar/", NotificacionesBorrarAPI.as_view(), name="api_notificaciones_borrar"),
+
+    path("api/notificaciones/", NotificacionesListAPI.as_view(), name="api_notificaciones_list"),
+    path("api/notificaciones/clear/", NotificacionesClearAPI.as_view(), name="api_notificaciones_clear"),
+    path("api/notificaciones/delete_all/", NotificacionesDeleteAllAPI.as_view(), name="api_notificaciones_delete_all"),
+
+    path("api/change-password/", ChangePasswordAPI.as_view(), name="api_change_password"),
+    path("api/password/change/", PasswordChangeAPI.as_view(), name="api_password_change"),
     # Endpoints RRHH y Gerente/Supervisor
     path("api/usuarios-por-rol-depto/", api_usuarios_por_rol_y_depto, name="api_usuarios_por_rol_y_depto"),
 
@@ -104,4 +119,6 @@ urlpatterns = [
 
     # Webhooks
     path("webhooks/mercadopago/", mercadopago_webhook, name="mercadopago_webhook"),
+    path("api/expo/register-token/", RegisterExpoTokenAPI.as_view(), name="api_register_expo_token"),
+    path("api/tareas/<int:pk>/", TareaDetalleAPI.as_view(), name="api_tarea_detalle"),
 ]
