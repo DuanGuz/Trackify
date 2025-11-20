@@ -13,6 +13,38 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { api } from "../api";
 
+function formatDate(dateString) {
+  if (!dateString) return "";
+
+  // 1) Intento directo con new Date (ideal si viene en ISO: 2025-11-19T21:30:00Z)
+  let d = new Date(dateString);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleString(); // respeta la configuración local del dispositivo
+  }
+
+  // 2) Intento parsear formato tipo "dd/mm/yyyy HH:MM[:SS]"
+  const m = dateString.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+  if (m) {
+    const [, dd, mm, yyyy, hh, min, ss] = m;
+    d = new Date(
+      Number(yyyy),
+      Number(mm) - 1,
+      Number(dd),
+      Number(hh),
+      Number(min),
+      ss ? Number(ss) : 0
+    );
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString();
+    }
+  }
+
+  // 3) Fallback: devolvemos el string tal cual para no mostrar "Invalid Date"
+  return dateString;
+}
+
 export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -24,17 +56,24 @@ export default function NotificationsScreen() {
     items.filter((n) => !n.is_read).length;
 
   const normalizeResponse = (data) => {
-    // Soporta dos formatos:
+    // Soporta varios formatos:
     // 1) [{...}, {...}]
-    // 2) { results: [...], unread_count: N }
+    // 2) { items: [...], unread_count: N }
+    // 3) { results: [...], unread_count: N }
     let items = [];
     let unread = 0;
 
     if (Array.isArray(data)) {
+      // Respuesta simple: lista de notificaciones
       items = data;
       unread = computeUnreadCount(items);
     } else if (data && typeof data === "object") {
-      items = Array.isArray(data.results) ? data.results : [];
+      if (Array.isArray(data.items)) {
+        items = data.items;
+      } else if (Array.isArray(data.results)) {
+        items = data.results;
+      }
+
       if (typeof data.unread_count === "number") {
         unread = data.unread_count;
       } else {
@@ -54,7 +93,10 @@ export default function NotificationsScreen() {
       setNotifications(items);
       setUnreadCount(unread);
     } catch (e) {
-      console.log("Error cargando notificaciones:", e?.response?.data || e.message);
+      console.log(
+        "Error cargando notificaciones:",
+        e?.response?.data || e.message
+      );
       if (showAlertOnError) {
         Alert.alert("Error", "No se pudieron cargar las notificaciones.");
       }
@@ -83,7 +125,10 @@ export default function NotificationsScreen() {
       await api.post("/notificaciones/clear/");
       await loadNotifications(false);
     } catch (e) {
-      console.log("Error marcando como leídas:", e?.response?.data || e.message);
+      console.log(
+        "Error marcando como leídas:",
+        e?.response?.data || e.message
+      );
       Alert.alert("Error", "No se pudo marcar como leídas.");
     }
   };
@@ -103,8 +148,14 @@ export default function NotificationsScreen() {
               setNotifications([]);
               setUnreadCount(0);
             } catch (e) {
-              console.log("Error borrando todas:", e?.response?.data || e.message);
-              Alert.alert("Error", "No se pudieron eliminar las notificaciones.");
+              console.log(
+                "Error borrando todas:",
+                e?.response?.data || e.message
+              );
+              Alert.alert(
+                "Error",
+                "No se pudieron eliminar las notificaciones."
+              );
             }
           },
         },
@@ -169,13 +220,20 @@ export default function NotificationsScreen() {
           style={styles.actionBtn}
           onPress={handleMarkAllRead}
         >
-          <Text style={styles.actionBtnText}>Marcar todas como leídas</Text>
+          <Text style={styles.actionBtnText}>
+            Marcar todas como leídas
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.actionBtn, styles.actionBtnDanger]}
           onPress={handleDeleteAll}
         >
-          <Text style={[styles.actionBtnText, styles.actionBtnTextDanger]}>
+          <Text
+            style={[
+              styles.actionBtnText,
+              styles.actionBtnTextDanger,
+            ]}
+          >
             Eliminar todas
           </Text>
         </TouchableOpacity>
@@ -185,14 +243,19 @@ export default function NotificationsScreen() {
       {loading && notifications.length === 0 ? (
         <View style={styles.center}>
           <ActivityIndicator />
-          <Text style={styles.loadingText}>Cargando notificaciones…</Text>
+          <Text style={styles.loadingText}>
+            Cargando notificaciones…
+          </Text>
         </View>
       ) : (
         <FlatList
           data={filteredNotifications}
           keyExtractor={(item) => String(item.id)}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+            />
           }
           contentContainerStyle={
             filteredNotifications.length === 0
@@ -207,12 +270,7 @@ export default function NotificationsScreen() {
             </Text>
           }
           renderItem={({ item }) => {
-            const createdAt = item.created_at
-              ? new Date(item.created_at)
-              : null;
-            const fechaStr = createdAt
-              ? createdAt.toLocaleString()
-              : "";
+            const fechaStr = formatDate(item.created_at);
 
             return (
               <View
@@ -225,13 +283,20 @@ export default function NotificationsScreen() {
                   {!item.is_read && (
                     <View style={styles.unreadDot} />
                   )}
-                  <Text style={styles.cardTitle} numberOfLines={2}>
+                  <Text
+                    style={styles.cardTitle}
+                    numberOfLines={2}
+                  >
                     Notificación
                   </Text>
                 </View>
-                <Text style={styles.cardMessage}>{item.mensaje}</Text>
+                <Text style={styles.cardMessage}>
+                  {item.mensaje}
+                </Text>
                 {!!fechaStr && (
-                  <Text style={styles.cardMeta}>{fechaStr}</Text>
+                  <Text style={styles.cardMeta}>
+                    {fechaStr}
+                  </Text>
                 )}
               </View>
             );
