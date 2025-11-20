@@ -7,8 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
   <meta name="author" content="">
-  <link rel="icon" href="favicon.ico">
-  <title>Tiny Dashboard - A Bootstrap Dashboard Template</title>
+  <link rel="icon" href="{% static 'core/img/logo.png' %}">
+  <title>Trackify</title>
   <!-- Simple bar CSS -->
   <link rel="stylesheet" href="css/simplebar.css">
   <!-- Fonts CSS -->
@@ -198,7 +198,7 @@
             </li>
           </ul>
           <li class="nav-item w-100">
-            <a class="nav-link" href="{% url 'dashboard_filtros' %}">
+            <a class="nav-link" href="{% url 'dashboard' %}">
               <i class="fe fe-bar-chart-2 fe-16"></i>
               <span class="ml-3 item-text">Dashboard</span>
             </a>
@@ -263,7 +263,7 @@
             </li>
           </ul>
           <li class="nav-item w-100">
-            <a class="nav-link" href="{% url 'dashboard_filtros' %}">
+            <a class="nav-link" href="{% url 'dashboard' %}">
               <i class="fe fe-bar-chart-2 fe-16"></i>
               <span class="ml-3 item-text">Dashboard</span>
             </a>

@@ -9,12 +9,13 @@
       <h5 class="mb-0">Dashboard</h5>
     </div>
 
-    <!-- ========== FILA 1: Tareas por estado (siempre a lo ancho) ========== -->
+    <!-- ========== FILA 1: Tareas por estado (gráfico + tabla) ========== -->
     <div class="row">
       <div class="col-12 mb-3">
         <div class="card h-100">
           <div class="card-header d-flex align-items-center">
-            <i class="fe fe-bar-chart-2 mr-2"></i><strong>Tareas por estado</strong>
+            <i class="fe fe-bar-chart-2 mr-2"></i>
+            <strong>Tareas por estado</strong>
             <span class="ml-auto small text-muted">Atrasadas: {{ tareas_atrasadas|default:"0" }}</span>
           </div>
           <div class="card-body">
@@ -22,82 +23,11 @@
               <canvas id="chartTareasEstado"></canvas>
             </div>
 
-            <!-- Leyenda que COINCIDE con el gráfico -->
+            <!-- Leyenda que coincide con el gráfico -->
             <div id="legendTareasEstado" class="mt-3"></div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ========== FILA 2: Rol + Top Trabajadores (Gerente) | Top Trabajadores solo (Supervisor) ========== -->
-    <div class="row">
-      {% if request.user.is_superuser or role_name == "Gerente" %}
-        <div class="col-12 col-xl-6 mb-3">
-          <div class="card h-100">
-            <div class="card-header d-flex align-items-center">
-              <i class="fe fe-users mr-2"></i><strong>Usuarios por rol</strong>
-            </div>
-            <div class="card-body">
-              <div style="height: 320px;">
-                <canvas id="chartUsuariosRol"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-xl-6 mb-3">
-          <div class="card h-100">
-            <div class="card-header d-flex align-items-center">
-              <i class="fe fe-award mr-2"></i><strong>Top 5 trabajadores por promedio</strong>
-            </div>
-            <div class="card-body">
-              <div style="height: 320px;">
-                <canvas id="chartTopTrab"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-      {% else %}
-        <div class="col-12 mb-3">
-          <div class="card h-100">
-            <div class="card-header d-flex align-items-center">
-              <i class="fe fe-award mr-2"></i><strong>Top 5 trabajadores por promedio</strong>
-            </div>
-            <div class="card-body">
-              <div style="height: 320px;">
-                <canvas id="chartTopTrab"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- ========== FILA 3: Top Supervisores centrado (solo Gerente/SU) ========== -->
-    {% if request.user.is_superuser or role_name == "Gerente" %}
-    <div class="row">
-      <div class="col-12 col-xl-8 offset-xl-2 mb-3">
-        <div class="card h-100">
-          <div class="card-header d-flex align-items-center">
-            <i class="fe fe-award mr-2"></i><strong>Top 5 supervisores por promedio</strong>
-          </div>
-          <div class="card-body">
-            <div style="height: 320px;">
-              <canvas id="chartTopSup"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- ========== TABLAS ========== -->
-    <!-- Tareas por estado (desglose por rol si Gerente/SU) -->
-    <div class="row">
-      <div class="col-12 mb-3">
-        <div class="card h-100">
-          <div class="card-header"><strong>Tareas por estado</strong></div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
+            <!-- Tabla Tareas por estado (misma info que el gráfico) -->
+            <div class="table-responsive mt-3">
               <table class="table table-hover mb-0">
                 <thead class="thead-light">
                   {% if request.user.is_superuser or role_name == "Gerente" %}
@@ -135,79 +65,153 @@
                 </tbody>
               </table>
             </div>
+
           </div>
         </div>
       </div>
+    </div>
 
+    <!-- ========== FILA 2: Usuarios por rol + Top 5 trabajadores (gráfico + tabla) ========== -->
+    <div class="row">
       {% if request.user.is_superuser or role_name == "Gerente" %}
-      <!-- Usuarios por rol -->
-      <div class="col-12 col-xl-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header"><strong>Usuarios por rol</strong></div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="thead-light">
-                  <tr><th>Rol</th><th class="text-right">Total</th></tr>
-                </thead>
-                <tbody>
-                  {% for r in usuarios_por_rol %}
-                  <tr>
-                    <td class="align-middle">{{ r.rol__nombre|default:"(Sin rol)" }}</td>
-                    <td class="align-middle text-right">{{ r.total }}</td>
-                  </tr>
-                  {% empty %}
-                  <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+        <!-- Usuarios por rol -->
+        <div class="col-12 col-xl-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="fe fe-users mr-2"></i>
+              <strong>Usuarios por rol</strong>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px;">
+                <canvas id="chartUsuariosRol"></canvas>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table class="table table-hover mb-0">
+                  <thead class="thead-light">
+                    <tr><th>Rol</th><th class="text-right">Total</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for r in usuarios_por_rol %}
+                    <tr>
+                      <td class="align-middle">{{ r.rol__nombre|default:"(Sin rol)" }}</td>
+                      <td class="align-middle text-right">{{ r.total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="text-center text-muted py-4">Sin datos</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Top 5 trabajadores -->
+        <div class="col-12 col-xl-6 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="fe fe-award mr-2"></i>
+              <strong>Top 5 trabajadores por promedio</strong>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px;">
+                <canvas id="chartTopTrab"></canvas>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table class="table table-hover mb-0">
+                  <thead class="thead-light">
+                    <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for t in top_trabajadores %}
+                    <tr>
+                      <td class="align-middle">{{ t.evaluado__primer_nombre }} {{ t.evaluado__primer_apellido }}</td>
+                      <td class="align-middle">
+                        <span class="badge badge-pill
+                          {% if t.prom >= 4 %}badge-success
+                          {% elif t.prom >= 3 %}badge-warning text-dark
+                          {% else %}badge-danger{% endif %}">
+                          {{ t.prom|floatformat:2 }}
+                        </span>
+                      </td>
+                      <td class="align-middle text-right">{{ t.total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      {% else %}
+        <!-- Supervisor: solo top trabajadores -->
+        <div class="col-12 mb-3">
+          <div class="card h-100">
+            <div class="card-header d-flex align-items-center">
+              <i class="fe fe-award mr-2"></i>
+              <strong>Top 5 trabajadores por promedio</strong>
+            </div>
+            <div class="card-body">
+              <div style="height: 320px;">
+                <canvas id="chartTopTrab"></canvas>
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table class="table table-hover mb-0">
+                  <thead class="thead-light">
+                    <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for t in top_trabajadores %}
+                    <tr>
+                      <td class="align-middle">{{ t.evaluado__primer_nombre }} {{ t.evaluado__primer_apellido }}</td>
+                      <td class="align-middle">
+                        <span class="badge badge-pill
+                          {% if t.prom >= 4 %}badge-success
+                          {% elif t.prom >= 3 %}badge-warning text-dark
+                          {% else %}badge-danger{% endif %}">
+                          {{ t.prom|floatformat:2 }}
+                        </span>
+                      </td>
+                      <td class="align-middle text-right">{{ t.total }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+        </div>
       {% endif %}
+    </div>
 
-      <!-- Top 5 Trabajadores -->
-      <div class="col-12 {% if request.user.is_superuser or role_name == 'Gerente' %}col-xl-6{% endif %} mb-3">
-        <div class="card h-100">
-          <div class="card-header"><strong>Top 5 trabajadores por promedio</strong></div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="thead-light">
-                  <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
-                </thead>
-                <tbody>
-                  {% for t in top_trabajadores %}
-                  <tr>
-                    <td class="align-middle">{{ t.evaluado__primer_nombre }} {{ t.evaluado__primer_apellido }}</td>
-                    <td class="align-middle">
-                      <span class="badge badge-pill
-                        {% if t.prom >= 4 %}badge-success
-                        {% elif t.prom >= 3 %}badge-warning text-dark
-                        {% else %}badge-danger{% endif %}">
-                        {{ t.prom|floatformat:2 }}
-                      </span>
-                    </td>
-                    <td class="align-middle text-right">{{ t.total }}</td>
-                  </tr>
-                  {% empty %}
-                  <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+       <!-- ========== FILA 3: Top supervisores + Peores trabajadores ========== -->
+    {% if request.user.is_superuser or role_name == "Gerente" %}
+    <div class="row">
 
-      {% if request.user.is_superuser or role_name == "Gerente" %}
-      <!-- Top 5 Supervisores -->
+      <!-- Top 5 supervisores -->
       <div class="col-12 col-xl-6 mb-3">
         <div class="card h-100">
-          <div class="card-header"><strong>Top 5 supervisores por promedio</strong></div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-award mr-2"></i>
+            <strong>Top 5 supervisores por promedio</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 320px;">
+              <canvas id="chartTopSup"></canvas>
+            </div>
+
+            <div class="table-responsive mt-3">
               <table class="table table-hover mb-0">
                 <thead class="thead-light">
                   <tr><th>Supervisor</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
@@ -232,11 +236,102 @@
                 </tbody>
               </table>
             </div>
+
           </div>
         </div>
       </div>
-      {% endif %}
+
+      <!-- Peores trabajadores (bottom 5) - Gerente ve los de su dpto -->
+      <div class="col-12 col-xl-6 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-arrow-down-circle mr-2"></i>
+            <strong>Trabajadores con menor promedio</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 320px;">
+              <canvas id="chartBottomTrab"></canvas>
+            </div>
+
+            <div class="table-responsive mt-3">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
+                </thead>
+                <tbody>
+                  {% for b in bottom_trabajadores %}
+                  <tr>
+                    <td class="align-middle">{{ b.evaluado__primer_nombre }} {{ b.evaluado__primer_apellido }}</td>
+                    <td class="align-middle">
+                      <span class="badge badge-pill
+                        {% if b.prom >= 4 %}badge-success
+                        {% elif b.prom >= 3 %}badge-warning text-dark
+                        {% else %}badge-danger{% endif %}">
+                        {{ b.prom|floatformat:2 }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-right">{{ b.total }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
     </div>
+
+    {% elif role_name == "Supervisor" %}
+    <!-- Supervisor: solo ve los peores trabajadores (sus propios trabajadores) -->
+    <div class="row">
+      <div class="col-12 mb-3">
+        <div class="card h-100">
+          <div class="card-header d-flex align-items-center">
+            <i class="fe fe-arrow-down-circle mr-2"></i>
+            <strong>Trabajadores con menor promedio</strong>
+          </div>
+          <div class="card-body">
+            <div style="height: 320px;">
+              <canvas id="chartBottomTrab"></canvas>
+            </div>
+
+            <div class="table-responsive mt-3">
+              <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                  <tr><th>Trabajador</th><th>Promedio</th><th class="text-right"># Eval</th></tr>
+                </thead>
+                <tbody>
+                  {% for b in bottom_trabajadores %}
+                  <tr>
+                    <td class="align-middle">{{ b.evaluado__primer_nombre }} {{ b.evaluado__primer_apellido }}</td>
+                    <td class="align-middle">
+                      <span class="badge badge-pill
+                        {% if b.prom >= 4 %}badge-success
+                        {% elif b.prom >= 3 %}badge-warning text-dark
+                        {% else %}badge-danger{% endif %}">
+                        {{ b.prom|floatformat:2 }}
+                      </span>
+                    </td>
+                    <td class="align-middle text-right">{{ b.total }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-center text-muted py-4">Sin datos</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+
   </div>
 </div>
 {% endblock %}
@@ -307,19 +402,18 @@
         type: 'bar',
         data: { labels: EST_labels, datasets: datasets },
         options: {
-          plugins: { legend: { display: false } }, // ocultamos leyenda nativa
+          plugins: { legend: { display: false } },
           responsive: true,
           scales: { x: { type: 'category' }, y: integerTicks() },
           maintainAspectRatio: false
         }
       });
 
-      // ===== Leyenda HTML que coincide con el gráfico =====
+      // Leyenda HTML
       var legendEl = document.getElementById('legendTareasEstado');
       if (legendEl) {
         legendEl.innerHTML = '';
 
-        // Cabecera de referencia de roles
         var header = document.createElement('div');
         header.className = 'small text-muted mb-2 d-flex align-items-center flex-wrap';
 
@@ -346,14 +440,12 @@
 
         legendEl.appendChild(header);
 
-        // Lista por estado: cada estado muestra dos items con texto
         var list = document.createElement('div');
         list.className = 'd-flex flex-wrap';
 
         EST_labels.forEach(function(label) {
           var color = colorByEstado(label);
 
-          // Item Trabajadores — con texto
           var itemTrab = document.createElement('div');
           itemTrab.className = 'mr-4 mb-2 d-flex align-items-center';
           itemTrab.innerHTML =
@@ -361,7 +453,6 @@
             '<span class="small">Trabajadores – '+label+'</span>';
           list.appendChild(itemTrab);
 
-          // Item Supervisores — con texto (solo si hay serie sup)
           if (hasSup) {
             var itemSup = document.createElement('div');
             itemSup.className = 'mr-4 mb-2 d-flex align-items-center';
@@ -376,10 +467,11 @@
       }
     }
 
-    // ===== Usuarios por rol (Gerente/SU)
+    // ===== Usuarios por rol
     var cr = document.getElementById('chartUsuariosRol');
     if (cr) {
-      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f',
+                     '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
       var ROL_labels = [{% for r in usuarios_por_rol %}"{{ r.rol__nombre|default:'(Sin rol)'|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
       var ROL_data   = [{% for r in usuarios_por_rol %}{{ r.total|default:"0"|unlocalize }}{% if not forloop.last %},{% endif %}{% endfor %}];
       new Chart(cr.getContext('2d'), {
@@ -399,7 +491,8 @@
     // ===== Top 5 Trabajadores (horizontal)
     var ct = document.getElementById('chartTopTrab');
     if (ct) {
-      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+      var paletteT = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f',
+                      '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
       var TOPT_labels = [{% for x in top_trabajadores %}"{{ x.evaluado__primer_nombre|default:''|add:' '|add:x.evaluado__primer_apellido|default:''|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
       var TOPT_prom   = [{% for x in top_trabajadores %}{{ x.prom|default_if_none:0|stringformat:"0.2f" }}{% if not forloop.last %},{% endif %}{% endfor %}];
       var TOPT_total  = [{% for x in top_trabajadores %}{{ x.total|default_if_none:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -408,7 +501,11 @@
         type: 'bar',
         data: {
           labels: TOPT_labels,
-          datasets: [{ label: 'Promedio', data: TOPT_prom, backgroundColor: TOPT_labels.map((_, i) => palette[i % palette.length]) }]
+          datasets: [{
+            label: 'Promedio',
+            data: TOPT_prom,
+            backgroundColor: TOPT_labels.map((_, i) => paletteT[i % paletteT.length])
+          }]
         },
         options: {
           indexAxis: 'y',
@@ -434,7 +531,8 @@
     // ===== Top 5 Supervisores (horizontal)
     var cs = document.getElementById('chartTopSup');
     if (cs) {
-      var palette = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f','#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
+      var paletteS = ['#4e79a7','#f28e2c','#e15759','#76b7b2','#59a14f',
+                      '#edc948','#b07aa1','#ff9da7','#9c755f','#bab0ab'];
       var SUP_labels = [{% for x in top_supervisores %}"{{ x.evaluado__primer_nombre|default:''|add:' '|add:x.evaluado__primer_apellido|default:''|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
       var SUP_prom   = [{% for x in top_supervisores %}{{ x.prom|default_if_none:0|stringformat:"0.2f" }}{% if not forloop.last %},{% endif %}{% endfor %}];
       var SUP_total  = [{% for x in top_supervisores %}{{ x.total|default_if_none:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
@@ -443,7 +541,11 @@
         type: 'bar',
         data: {
           labels: SUP_labels,
-          datasets: [{ label: 'Promedio', data: SUP_prom, backgroundColor: SUP_labels.map((_, i) => palette[i % palette.length]) }]
+          datasets: [{
+            label: 'Promedio',
+            data: SUP_prom,
+            backgroundColor: SUP_labels.map((_, i) => paletteS[i % paletteS.length])
+          }]
         },
         options: {
           indexAxis: 'y',
@@ -465,6 +567,48 @@
         }
       });
     }
+
+    // ===== Bottom 5 Trabajadores (horizontal)
+    var cb = document.getElementById('chartBottomTrab');
+    if (cb) {
+      var paletteB = ['#e15759','#f28e2c','#edc948','#76b7b2','#59a14f',
+                      '#b07aa1','#ff9da7','#9c755f','#bab0ab','#4e79a7'];
+
+      var BTT_labels = [{% for x in bottom_trabajadores %}"{{ x.evaluado__primer_nombre|default:''|add:' '|add:x.evaluado__primer_apellido|default:''|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+      var BTT_prom   = [{% for x in bottom_trabajadores %}{{ x.prom|default_if_none:0|stringformat:"0.2f" }}{% if not forloop.last %},{% endif %}{% endfor %}];
+      var BTT_total  = [{% for x in bottom_trabajadores %}{{ x.total|default_if_none:0 }}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+      new Chart(cb.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: BTT_labels,
+          datasets: [{
+            label: 'Promedio',
+            data: BTT_prom,
+            backgroundColor: BTT_labels.map((_, i) => paletteB[i % paletteB.length])
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          scales: { x: { beginAtZero: true, suggestedMax: 5 }, y: { type: 'category' } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  var i = ctx.dataIndex;
+                  var val = Number(ctx.raw) || 0;
+                  var cnt = (BTT_total && BTT_total[i] != null) ? BTT_total[i] : '-';
+                  return 'Promedio: ' + val.toFixed(2) + ' · #Eval: ' + cnt;
+                }
+              }
+            }
+          },
+          maintainAspectRatio: false
+        }
+      });
+    }
+
   })();
   </script>
 {% endblock %}

@@ -371,11 +371,11 @@ class TareaForm(forms.ModelForm):
         self.empresa = kwargs.pop("empresa", None)
         super().__init__(*args, **kwargs)
 
-        # 🔐 Asegura empresa en la instancia lo antes posible
+     
         if self.empresa and not getattr(self.instance, "empresa_id", None):
             self.instance.empresa = self.empresa
 
-        # 🗓️ Tope visual: no permitir elegir fechas anteriores a hoy en el datepicker
+      
         try:
             hoy = timezone.localdate().isoformat()
             self.fields['fecha_limite'].widget.attrs['min'] = hoy
@@ -421,7 +421,6 @@ class TareaForm(forms.ModelForm):
         else:
             self.fields['asignado'].queryset = User.objects.none()
 
-    # 🛑 Candado del lado servidor: no permitir fechas pasadas
     def clean_fecha_limite(self):
         f = self.cleaned_data.get('fecha_limite')
         if f and f < timezone.localdate():
@@ -429,7 +428,6 @@ class TareaForm(forms.ModelForm):
         return f
 
     def clean(self):
-        # ✅ Asegura empresa en la instancia ANTES del full_clean del modelo
         if self.empresa and not getattr(self.instance, "empresa_id", None):
             self.instance.empresa = self.empresa
 
@@ -486,7 +484,7 @@ class TareaEstadoForm(forms.ModelForm):
                     tarea=tarea,
                     usuario=user,
                     contenido=texto,
-                    empresa=user.empresa   # 👈 requerido por tu modelo
+                    empresa=user.empresa   
                 )
         return tarea
 

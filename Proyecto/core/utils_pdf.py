@@ -6,7 +6,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
-from django.contrib.staticfiles import finders  # 👈 clave
+from django.contrib.staticfiles import finders  
 
 def link_callback(uri, rel):
     """
@@ -67,7 +67,7 @@ def render_to_pdf(template_src, context_dict=None, filename="reporte.pdf"):
         src=BytesIO(html.encode("utf-8")),
         dest=result,
         encoding='utf-8',
-        link_callback=link_callback,  # 👈 importante
+        link_callback=link_callback, 
     )
     if not pdf.err:
         resp = HttpResponse(result.getvalue(), content_type='application/pdf')

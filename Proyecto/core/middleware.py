@@ -12,7 +12,7 @@ ALLOWED_PREFIXES = (
     "/logout/",
     "/registro-web/",
     "/password-reset/",
-    "/api/auth/",   # por si tienes endpoints de auth
+    "/api/auth/",  
     "/webhooks/mercadopago/",
     "/billing/checkout/",
     "/billing/success/",

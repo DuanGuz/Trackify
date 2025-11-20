@@ -34,8 +34,7 @@
         <a href="{% url 'billing_checkout' %}" class="btn btn-primary btn-block mb-2">
           {% if sub.is_active %}Cambiar ciclo / renovar{% else %}Suscribirse{% endif %}
         </a>
-
-        <!-- 🔄 Nuevo botón para forzar sincronización manual -->
+        
         <a href="{% url 'billing_refresh' %}" class="btn btn-outline-info btn-block mb-2">
           Refrescar estado de suscripción
         </a>

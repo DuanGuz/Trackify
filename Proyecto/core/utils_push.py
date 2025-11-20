@@ -16,7 +16,7 @@ def send_expo_push(token: str, title: str, body: str, data=None):
         "title": title,
         "body": body,
         "sound": "default",
-        "data": data or {},   # 👈 aquí va el "data" que usaremos en la app
+        "data": data or {},   
     }
 
     try:

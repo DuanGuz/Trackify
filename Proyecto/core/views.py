@@ -79,7 +79,7 @@ def registro_web(request):
             if user_auth is not None:
                 login(request, user_auth)
                 messages.success(request, "¡Cuenta creada! Completa tu suscripción para activar tu empresa.")
-                return redirect('billing_checkout')  # <- manda a tu checkout
+                return redirect('billing_checkout')  
             else:
                 messages.success(request, "¡Cuenta creada! Inicia sesión para continuar.")
                 return redirect('web_login')
@@ -921,26 +921,36 @@ class DashboardView(SuscripcionActivaRequiredMixin, SoloGerenteSupervisorMixin, 
 
         # Bases por empresa
         qs_users  = User.objects.select_related("rol", "departamento").filter(empresa=u.empresa)
-        qs_tareas = (Tarea.objects
-                     .select_related("departamento", "asignado", "asignado__rol")
-                     .filter(empresa=u.empresa))
-        qs_eval   = (Evaluacion.objects
-                     .select_related("evaluado", "evaluador",
-                                     "evaluado__rol", "evaluado__departamento",
-                                     "evaluador__rol", "evaluador__departamento")
-                     .filter(empresa=u.empresa))
+        qs_tareas = (
+            Tarea.objects
+            .select_related("departamento", "asignado", "asignado__rol")
+            .filter(empresa=u.empresa)
+        )
+        qs_eval   = (
+            Evaluacion.objects
+            .select_related(
+                "evaluado", "evaluador",
+                "evaluado__rol", "evaluado__departamento",
+                "evaluador__rol", "evaluador__departamento"
+            )
+            .filter(empresa=u.empresa)
+        )
 
         # Alcance por rol
         if u.is_superuser:
             pass
         elif rn == "Gerente" and depto:
             qs_users  = qs_users.filter(departamento=depto)
-            qs_tareas = qs_tareas.filter(departamento=depto)  # Gerente ve tareas de Supervisores + Trabajadores de su depto
+            qs_tareas = qs_tareas.filter(departamento=depto)
             qs_eval   = qs_eval.filter(evaluado__departamento=depto)
         elif rn == "Supervisor" and depto:
             qs_users  = qs_users.filter(departamento=depto, rol__nombre="Trabajador")
-            qs_tareas = qs_tareas.filter(departamento=depto, asignado__rol__nombre="Trabajador")  # solo trabajadores
-            qs_eval   = qs_eval.filter(tipo="TRABAJADOR", evaluado__departamento=depto, evaluado__rol__nombre="Trabajador")
+            qs_tareas = qs_tareas.filter(departamento=depto, asignado__rol__nombre="Trabajador")
+            qs_eval   = qs_eval.filter(
+                tipo="TRABAJADOR",
+                evaluado__departamento=depto,
+                evaluado__rol__nombre="Trabajador",
+            )
 
         # ===== Gráfico principal: Tareas por estado (barras múltiples por rol asignado)
         ESTADOS = ["Pendiente", "En progreso", "Atrasada", "Finalizada"]
@@ -953,25 +963,45 @@ class DashboardView(SuscripcionActivaRequiredMixin, SoloGerenteSupervisorMixin, 
                 por_estado[est][rol_asig] = row["total"]
 
         data_trab = [por_estado[e]["Trabajador"] for e in ESTADOS]
-        data_supv = [por_estado[e]["Supervisor"] for e in ESTADOS]  # para Supervisor quedará en 0 (OK)
+        data_supv = [por_estado[e]["Supervisor"] for e in ESTADOS]
 
         # KPIs y tablas
-        usuarios_por_rol = qs_users.values("rol__nombre").annotate(total=Count("id")).order_by("rol__nombre")
+        usuarios_por_rol = (
+            qs_users
+            .values("rol__nombre")
+            .annotate(total=Count("id"))
+            .order_by("rol__nombre")
+        )
         atrasadas = qs_tareas.filter(estado="Atrasada").count()
 
-        # Top 5
+        # Top / Bottom
         top_n = 5
-        top_trabajadores = (qs_eval.filter(evaluado__rol__nombre="Trabajador")
-                            .values("evaluado__primer_nombre","evaluado__primer_apellido")
-                            .annotate(prom=Avg("puntaje"), total=Count("id"))
-                            .order_by("-prom","-total")[:top_n])
 
-        top_supervisores = (qs_eval.filter(evaluado__rol__nombre="Supervisor")
-                            .values("evaluado__primer_nombre","evaluado__primer_apellido")
-                            .annotate(prom=Avg("puntaje"), total=Count("id"))
-                            .order_by("-prom","-total")[:top_n])
+        qs_eval_trab = qs_eval.filter(evaluado__rol__nombre="Trabajador")
 
-        # Tabla por estado (desglose por rol si aplica)
+        top_trabajadores = (
+            qs_eval_trab
+            .values("evaluado__primer_nombre", "evaluado__primer_apellido")
+            .annotate(prom=Avg("puntaje"), total=Count("id"))
+            .order_by("-prom", "-total")[:top_n]
+        )
+
+        # 🔹 NUEVO: bottom 5 trabajadores (peores promedios)
+        bottom_trabajadores = (
+            qs_eval_trab
+            .values("evaluado__primer_nombre", "evaluado__primer_apellido")
+            .annotate(prom=Avg("puntaje"), total=Count("id"))
+            .order_by("prom", "-total")[:top_n]
+        )
+
+        top_supervisores = (
+            qs_eval.filter(evaluado__rol__nombre="Supervisor")
+            .values("evaluado__primer_nombre", "evaluado__primer_apellido")
+            .annotate(prom=Avg("puntaje"), total=Count("id"))
+            .order_by("-prom", "-total")[:top_n]
+        )
+
+        # Tabla por estado
         tabla_estado = []
         for e in ESTADOS:
             fila = {
@@ -989,13 +1019,15 @@ class DashboardView(SuscripcionActivaRequiredMixin, SoloGerenteSupervisorMixin, 
             "tareas_estado_sup": data_supv,
             "tareas_atrasadas": atrasadas,
 
-            "usuarios_por_rol": usuarios_por_rol,  # se mostrará solo a Gerente/SU
+            "usuarios_por_rol": usuarios_por_rol,
             "tabla_estado": tabla_estado,
 
-            "top_trabajadores": top_trabajadores,   # top 5
-            "top_supervisores": top_supervisores,   # top 5 (solo Gerente/SU)
+            "top_trabajadores": top_trabajadores,
+            "top_supervisores": top_supervisores,
+            "bottom_trabajadores": bottom_trabajadores,  
         })
         return ctx
+
     
 
 # -----------------------
@@ -1718,39 +1750,27 @@ def password_reset_sms_change(request):
 @permission_classes([IsAuthenticated])
 def notif_list_api(request):
     """
-    Devuelve las notificaciones del usuario autenticado.
-    Sirve para:
-      - Web (sesión Django)
-      - App móvil (JWT)
-    Mantiene la clave `items` para la web
-    y además expone `results` para la app móvil.
+    Devuelve las notificaciones del usuario logueado.
     """
-    qs = (
-        Notificacion.objects
-        .filter(usuario=request.user)
-        .order_by('-created_at')[:100]
-    )
+    qs = (Notificacion.objects
+          .filter(usuario=request.user)
+          .order_by('-created_at')[:100])
 
     data = []
     unread = 0
     for n in qs:
         if not n.is_read:
             unread += 1
+        # Convertir la fecha a formato ISO estándar para el frontend
+        created_at_formatted = localtime(n.created_at).isoformat()
+        
         data.append({
             "id": n.id,
             "mensaje": n.mensaje,
             "is_read": n.is_read,
-            # mismo formato que ya usabas en la web
-            "created_at": localtime(n.created_at).strftime("%d/%m/%Y %H:%M"),
+            "created_at": created_at_formatted,
         })
-
-    # 🔹 Para la web sigues usando `items` y `unread_count`
-    # 🔹 Para la app móvil puedes usar `results` y `unread_count`
-    return Response({
-        "items": data,
-        "results": data,      # alias para la app móvil
-        "unread_count": unread,
-    })
+    return JsonResponse({"items": data, "unread_count": unread})
 
 
 @api_view(["POST"])

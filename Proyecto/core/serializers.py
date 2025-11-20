@@ -85,7 +85,7 @@ class TareaEstadoSerializer(serializers.Serializer):
     comentario = serializers.CharField(
         required=False,
         allow_blank=True,
-        allow_null=True,   # 👈 clave para aceptar null
+        allow_null=True,   
         max_length=1000,
     )
 
@@ -114,7 +114,7 @@ class EvaluacionSerializer(serializers.ModelSerializer):
         fields = ["id","puntaje","comentarios","created_at","created_at_fmt","supervisor_nombre"]
 
     def get_supervisor_nombre(self, obj):
-        s = obj.evaluador   # 👈 AQUÍ EL CAMBIO
+        s = obj.evaluador   
         return f"{getattr(s,'primer_nombre','')} {getattr(s,'primer_apellido','')}".strip()
 
     def get_created_at_fmt(self, obj):

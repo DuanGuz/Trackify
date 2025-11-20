@@ -54,7 +54,7 @@ urlpatterns = [
     path('mis-evaluaciones/', EvalMisEvaluacionesView.as_view(), name='eval_list_mias'),
 
     #DASHBOARD/REPORTES:
-    path("dashboard/", DashboardFiltrosView.as_view(), name="dashboard_filtros"),
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("api/dashboard/top-evaluados/", api_top_evaluados, name="api_top_evaluados"),
     path("api/dashboard/tareas-estado/", api_tareas_por_estado, name="api_tareas_por_estado"),
     path("api/dashboard/tareas-estado-por-depto/", api_tareas_estado_por_depto, name="api_tareas_estado_por_depto"),

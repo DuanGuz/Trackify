@@ -150,7 +150,7 @@ class Tarea(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADOS, default='Pendiente')
     departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
     asignado = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tareas_asignadas')
-    creada_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_creadas')  # 👈 NUEVO
+    creada_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tareas_creadas') 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     empresa = models.ForeignKey("Empresa", on_delete=models.CASCADE, related_name="tareas", db_index=True)
