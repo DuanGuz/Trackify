@@ -97,9 +97,10 @@ urlpatterns = [
     path("notificaciones/clear/", notif_clear_api, name="notif_clear_api"),
     path("notificaciones/delete_all/", notif_delete_all_api, name="notif_delete_all_api"),
     
-    path("api/notificaciones/", NotificacionesAPI.as_view(), name="api_notificaciones"),
-    path("api/notificaciones/marcar-leidas/", NotificacionesMarcarLeidasAPI.as_view(), name="api_notificaciones_marcar"),
-    path("api/notificaciones/borrar/", NotificacionesBorrarAPI.as_view(), name="api_notificaciones_borrar"),
+    # Notificaciones API (app móvil, JWT)
+    path("api/notificaciones/", notif_list_api_mobile, name="api_notif_list"),
+    path("api/notificaciones/clear/", notif_clear_api_mobile, name="api_notif_clear"),
+    path("api/notificaciones/delete_all/", notif_delete_all_api_mobile, name="api_notif_delete_all"),
 
     path("api/notificaciones/", NotificacionesListAPI.as_view(), name="api_notificaciones_list"),
     path("api/notificaciones/clear/", NotificacionesClearAPI.as_view(), name="api_notificaciones_clear"),

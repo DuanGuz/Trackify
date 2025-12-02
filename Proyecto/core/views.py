@@ -1745,55 +1745,103 @@ def password_reset_sms_change(request):
         "form": form,
     })
 
-#Notificaciones:
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@login_required
 def notif_list_api(request):
     """
-    Devuelve las notificaciones del usuario logueado.
+    Devuelve las notificaciones del usuario logueado (para la WEB).
     """
-    qs = (Notificacion.objects
-          .filter(usuario=request.user)
-          .order_by('-created_at')[:100])
+    qs = (
+        Notificacion.objects
+        .filter(usuario=request.user)
+        .order_by('-created_at')[:100]
+    )
 
     data = []
     unread = 0
     for n in qs:
         if not n.is_read:
             unread += 1
-        # Convertir la fecha a formato ISO estándar para el frontend
-        created_at_formatted = localtime(n.created_at).isoformat()
-        
+
+        # La web muestra este string tal cual:
+        created_at_formatted = localtime(n.created_at).strftime("%d/%m/%Y %H:%M")
+
         data.append({
             "id": n.id,
             "mensaje": n.mensaje,
             "is_read": n.is_read,
             "created_at": created_at_formatted,
         })
+
     return JsonResponse({"items": data, "unread_count": unread})
+
+
+@login_required
+@require_POST
+def notif_clear_api(request):
+    """
+    Marca como leídas todas las notificaciones del usuario (WEB).
+    """
+    Notificacion.objects.filter(usuario=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({"ok": True})
+
+
+@login_required
+@require_POST
+def notif_delete_all_api(request):
+    """
+    Elimina todas las notificaciones del usuario (WEB).
+    """
+    Notificacion.objects.filter(usuario=request.user).delete()
+    return JsonResponse({"ok": True})
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def notif_list_api_mobile(request):
+    """
+    Notificaciones para la APP MÓVIL.
+    Devuelve fecha en ISO para que React Native pueda parsear con new Date().
+    """
+    qs = (
+        Notificacion.objects
+        .filter(usuario=request.user)
+        .order_by('-created_at')[:100]
+    )
+
+    data = []
+    unread = 0
+    for n in qs:
+        if not n.is_read:
+            unread += 1
+
+        created_at_iso = localtime(n.created_at).isoformat()
+
+        data.append({
+            "id": n.id,
+            "mensaje": n.mensaje,
+            "is_read": n.is_read,
+            "created_at": created_at_iso,
+        })
+
+    return Response({"items": data, "unread_count": unread})
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def notif_clear_api(request):
+def notif_clear_api_mobile(request):
     """
-    Marca como leídas todas las notificaciones del usuario actual.
-    Compatible con web (sesión) y móvil (JWT).
+    Marca como leídas todas las notificaciones (APP MÓVIL).
     """
     Notificacion.objects.filter(usuario=request.user, is_read=False).update(is_read=True)
-    # Mantengo el mismo payload que antes
     return Response({"ok": True})
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def notif_delete_all_api(request):
+def notif_delete_all_api_mobile(request):
     """
-    Elimina todas las notificaciones del usuario actual.
-    Compatible con web (sesión) y móvil (JWT).
+    Elimina todas las notificaciones del usuario (APP MÓVIL).
     """
     Notificacion.objects.filter(usuario=request.user).delete()
-    # Mantengo el mismo payload que antes
     return Response({"ok": True})
 
 @login_required

@@ -183,14 +183,33 @@ class Tarea(models.Model):
         return self.titulo
 
 # Modelo de Evaluación (Calificación de desempeño)
+
+# Modelo de Evaluación (Calificación de desempeño)
 class Evaluacion(models.Model):
+
     TIPO = [
         ("SUPERVISOR", "Supervisor"),
         ("TRABAJADOR", "Trabajador"),
     ]
+
+    FINALIDAD_CHOICES = [
+        ("DESEMPENO", "Evaluación de desempeño general"),
+        ("SEGUIMIENTO", "Seguimiento periódico"),
+        ("MEJORA", "Evaluación para mejora o retroalimentación"),
+        ("'INCIDENCIA", "Evaluación por incidencia o bajo rendimiento"),
+        ("PROMOCION", "Evaluación para promoción o reconocimiento"),
+        ("INGRESO", "Ingreso / período de prueba"),
+        ("REORIENTACION", "Reorientación del puesto o funciones"),
+        ("SALIDA", "Evaluación de cierre / salida"),
+    ]
+
     evaluado = models.ForeignKey(User, on_delete=models.CASCADE, related_name="evaluaciones_recibidas")
     evaluador = models.ForeignKey(User, on_delete=models.CASCADE, related_name="evaluaciones_realizadas")
     tipo = models.CharField(max_length=20, choices=TIPO)
+
+    # NUEVO CAMPO
+    finalidad = models.CharField(max_length=20, choices=FINALIDAD_CHOICES, default="REGULAR")
+
     puntaje = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
@@ -206,13 +225,14 @@ class Evaluacion(models.Model):
         if not self.evaluador or not self.evaluado:
             return
 
-        # 1) Misma empresa en todos
+        # 1) Misma empresa
         if self.evaluador.empresa_id != self.empresa_id or self.evaluado.empresa_id != self.empresa_id:
             raise ValidationError("Evaluador, evaluado y evaluación deben pertenecer a la misma empresa.")
 
-        # 2) Reglas de flujo
+        # 2) Reglas de flujo (Gerente → Supervisor / Supervisor → Trabajador)
         rol_eval = getattr(self.evaluador.rol, "nombre", "")
         rol_evad = getattr(self.evaluado.rol, "nombre", "")
+
         if self.tipo == "SUPERVISOR":
             if rol_eval != "Gerente" or rol_evad != "Supervisor":
                 raise ValidationError("Para tipo SUPERVISOR: Gerente evalúa a Supervisor.")
@@ -228,6 +248,7 @@ class Evaluacion(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.evaluado} por {self.evaluador} ({self.puntaje})"
+
 
 # Modelo de Notificación
 class Notificacion(models.Model):

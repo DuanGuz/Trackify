@@ -492,8 +492,11 @@ class TareaEstadoForm(forms.ModelForm):
 class EvaluacionForm(forms.ModelForm):
     class Meta:
         model = Evaluacion
-        fields = ["evaluado", "puntaje", "comentarios"]
-        widgets = {"puntaje": forms.NumberInput(attrs={"min": 1, "max": 5, "step": 1})}
+        fields = ["evaluado", "finalidad", "puntaje", "comentarios"]
+        widgets = {
+            "puntaje": forms.NumberInput(attrs={"min": 1, "max": 5, "step": 1}),
+            "finalidad": forms.Select(attrs={"class": "form-control"}),
+        }
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
