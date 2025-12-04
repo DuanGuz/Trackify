@@ -1,0 +1,78 @@
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center mb-2">
+      <div class="mr-3">
+        {% if tarea.estado == "Pendiente" %}
+          <span class="badge badge-warning text-dark">Pendiente</span>
+        {% elif tarea.estado == "En progreso" %}
+          <span class="badge badge-info">En progreso</span>
+        {% elif tarea.estado == "Atrasada" %}
+          <span class="badge badge-danger">Atrasada</span>
+        {% elif tarea.estado == "Finalizada" %}
+          <span class="badge badge-success">Finalizada</span>
+        {% else %}
+          <span class="badge badge-secondary">{{ tarea.estado }}</span>
+        {% endif %}
+      </div>
+
+      <div class="mr-3">
+        <i class="fe fe-calendar"></i>
+        <span class="ml-1"><strong>Vence:</strong> {{ tarea.fecha_limite|date:"d/m/Y" }}</span>
+      </div>
+
+      <div class="mr-3">
+        <i class="fe fe-folder"></i>
+        <span class="ml-1"><strong>Departamento:</strong> {{ tarea.departamento.nombre }}</span>
+      </div>
+
+      <div class="mr-3">
+        <i class="fe fe-user"></i>
+        <span class="ml-1">
+          <strong>Asignado:</strong>
+          {{ tarea.asignado.primer_nombre }} {{ tarea.asignado.primer_apellido }}
+        </span>
+      </div>
+    </div>
+
+    {% if tarea.descripcion %}
+      <hr>
+      <div>
+        <strong>Descripción</strong>
+        <div class="text-muted mt-1">
+          {{ tarea.descripcion|linebreaks }}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center">
+    <i class="fe fe-message-square mr-2"></i>
+    <strong>Comentarios</strong>
+    <span class="ml-2 text-muted">({{ tarea.comments.count }})</span>
+  </div>
+  <div class="card-body p-0">
+    {% if tarea.comments.all %}
+      <ul class="list-group list-group-flush">
+        {% for c in tarea.comments.all %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <div class="font-weight-500">
+              {{ c.usuario.username }}
+              <span class="text-muted small">• {{ c.created_at|date:"d/m/Y H:i" }}</span>
+            </div>
+          </div>
+          <div class="mt-1">
+            {{ c.contenido|linebreaksbr }}
+          </div>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted text-center py-4">Sin comentarios.</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="p-4 text-center text-muted">Sin comentarios.</div>
+    {% endif %}
+  </div>
+</div>

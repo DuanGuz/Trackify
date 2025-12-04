@@ -1,0 +1,125 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Trackify – Gestión de Tareas y Desempeño{% endblock %}</title>
+
+  <!-- Simple bar CSS -->
+  <link rel="stylesheet" href="{% static 'core/css/simplebar.css' %}">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Icons -->
+  <link rel="stylesheet" href="{% static 'core/css/feather.css' %}">
+  <!-- Date Range Picker -->
+  <link rel="stylesheet" href="{% static 'core/css/daterangepicker.css' %}">
+  <!-- App CSS -->
+  <link rel="stylesheet" href="{% static 'core/css/app-light.css' %}" id="lightTheme">
+  <link rel="stylesheet" href="{% static 'core/css/app-dark.css' %}" id="darkTheme" disabled>
+
+  <style>
+    body { font-family: 'Overpass', sans-serif; }
+    .navbar-shadow { box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+    .hero {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 60%);
+      border-bottom: 1px solid #eef2f7;
+    }
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #f0f4ff; color: #335eea;
+    }
+    .chip { font-size: .825rem; padding: .25rem .6rem; border-radius: 999px; background:#f3f6fb; }
+    .section-title { font-weight: 700; letter-spacing: .2px; }
+    .check { color:#59a14f; }
+    .muted { color:#6c757d; }
+    .card h6 { font-weight: 600; }
+    .roadmap-dot { width: 10px; height:10px; background:#335eea; border-radius:50%; display:inline-block; }
+    .faq-item + .faq-item { border-top: 1px solid #eef2f7; }
+    .footer { border-top:1px solid #eef2f7; }
+    .btn-pill { border-radius: 999px; }
+  </style>
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="light">
+
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white navbar-shadow sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
+        <img src="{% static 'core/img/logo.png' %}" alt="Trackify" style="height:36px;" class="mr-2">
+        <strong>Trackify</strong>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navPublic"
+              aria-controls="navPublic" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="fe fe-menu"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navPublic">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item"><a class="nav-link" href="#beneficios">Beneficios</a></li>
+          <li class="nav-item"><a class="nav-link" href="#como-funciona">Cómo funciona</a></li>
+          <li class="nav-item"><a class="nav-link" href="#modulos">Módulos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#roles">Perfiles</a></li>
+          <li class="nav-item"><a class="nav-link" href="#roadmap">Roadmap</a></li>
+          <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+        </ul>
+        <div class="d-flex align-items-center">
+          <a href="{% url 'web_login' %}" class="btn btn-outline-primary btn-pill mr-2">Iniciar sesión</a>
+          <a href="{% url 'registro_web' %}" class="btn btn-primary btn-pill">Crear cuenta</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  {% block content %}{% endblock %}
+
+  <!-- FOOTER -->
+  <footer class="footer py-4 mt-5">
+    <div class="container d-flex flex-wrap align-items-center">
+      <div class="mr-auto text-muted">
+        © {{ now|date:"Y" }} Trackify — Gestión de tareas y desempeño.
+      </div>
+      <div>
+        <a href="#beneficios" class="text-muted mr-3">Beneficios</a>
+        <a href="#faq" class="text-muted mr-3">FAQ</a>
+        <a href="{% url 'web_login' %}" class="text-muted">Acceder</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script src="{% static 'core/js/jquery.min.js' %}"></script>
+  <script src="{% static 'core/js/popper.min.js' %}"></script>
+  <script src="{% static 'core/js/moment.min.js' %}"></script>
+  <script src="{% static 'core/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'core/js/simplebar.min.js' %}"></script>
+  <script src="{% static 'core/js/daterangepicker.js' %}"></script>
+  <script src="{% static 'core/js/jquery.stickOnScroll.js' %}"></script>
+  <script src="{% static 'core/js/tinycolor-min.js' %}"></script>
+  <script src="{% static 'core/js/config.js' %}"></script>
+  <script src="{% static 'core/js/apps.js' %}"></script>
+
+  <script>
+    // scroll suave en anclas
+    (function(){
+      const links = document.querySelectorAll('a[href^="#"]');
+      for (const l of links) {
+        l.addEventListener('click', function(e){
+          const id = this.getAttribute('href');
+          if (id.length > 1 && document.querySelector(id)) {
+            e.preventDefault();
+            document.querySelector(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      }
+    })();
+  </script>
+
+  {% block js %}{% endblock %}
+</body>
+</html>

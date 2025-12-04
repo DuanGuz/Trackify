@@ -1,0 +1,132 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-md-10">
+
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center mb-3">
+      <h5 class="mb-0">
+        {% if form.instance.pk %}
+          <i class="fe fe-edit mr-1"></i> Editar tarea
+        {% else %}
+          <i class="fe fe-plus mr-1"></i> Crear tarea
+        {% endif %}
+      </h5>
+      {% if request.user.rol.nombre == "Gerente" %}
+      <a href="{% url 'tarea_list_gs' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver
+      </a>
+      {% elif request.user.rol.nombre == "Supervisor" %}
+      <a href="{% url 'tarea_list_supervisor_equipo' %}" class="btn btn-light btn-sm ml-auto">
+        <i class="fe fe-arrow-left mr-1"></i> Volver
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Formulario -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+
+        <!-- 🔹 Mensaje informativo según el rol -->
+        {% if request.user.rol.nombre == "Gerente" %}
+          <div class="alert alert-info mb-4">
+            Estás asignando tareas a <strong>Supervisores</strong>.
+          </div>
+        {% elif request.user.rol.nombre == "Supervisor" %}
+          <div class="alert alert-info mb-4">
+            Estás asignando tareas a <strong>Trabajadores</strong> de tu departamento.
+          </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form|crispy }}
+
+          <div class="mt-4 d-flex justify-content-end">
+            <a href="{% url 'tarea_list_gs' %}" class="btn btn-light mr-2">
+              <i class="fe fe-x"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="fe fe-save mr-1"></i> Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+{% block js %}
+  {{ block.super }}
+  <script>
+    (function(){
+      // Detecta rol del usuario desde el servidor (string)
+      var rolUsuario = "{{ request.user.rol.nombre|default_if_none:'' }}";
+      // Decide a quién se asigna según el rol
+      var rolObjetivo = (rolUsuario === "Gerente") ? "Supervisor" : (rolUsuario === "Supervisor" ? "Trabajador" : "");
+
+      // Obtén selects por 'id' que genera Django (ajusta si usas IDs personalizados)
+      var selDepto = document.getElementById("id_departamento");
+      var selAsignado = document.getElementById("id_asignado");
+
+      if (!selDepto || !selAsignado) return;
+
+      function setDisabledAsignado(disabled) {
+        if (disabled) {
+          selAsignado.setAttribute("disabled", "disabled");
+        } else {
+          selAsignado.removeAttribute("disabled");
+        }
+      }
+
+      function cargarAsignados(deptoId) {
+        if (!deptoId || !rolObjetivo) {
+          // limpiar opciones
+          selAsignado.innerHTML = '<option value="">Selecciona un departamento primero</option>';
+          setDisabledAsignado(true);
+          return;
+        }
+        // Llamada AJAX
+        var url = "{% url 'api_usuarios_por_rol_y_depto' %}?rol=" + encodeURIComponent(rolObjetivo) + "&depto=" + encodeURIComponent(deptoId);
+        fetch(url, {credentials: 'same-origin'})
+          .then(r => r.json())
+          .then(data => {
+            var items = (data && data.items) ? data.items : [];
+            var opts = ['<option value="">---------</option>'];
+            items.forEach(function(it){
+              opts.push('<option value="'+ it.id +'">'+ it.text +'</option>');
+            });
+            selAsignado.innerHTML = opts.join('');
+            setDisabledAsignado(items.length === 0);
+          })
+          .catch(() => {
+            selAsignado.innerHTML = '<option value="">(error cargando usuarios)</option>';
+            setDisabledAsignado(true);
+          });
+      }
+
+      // Estado inicial
+      var deptoInicial = selDepto.value;
+      if (!deptoInicial && selAsignado.value === "") {
+        // Si no hay depto elegido, deshabilitado
+        setDisabledAsignado(true);
+      } else if (rolUsuario === "Gerente") {
+        // En Gerente, siempre dependerá del depto elegido
+        cargarAsignados(deptoInicial);
+      } else if (rolUsuario === "Supervisor") {
+        // En Supervisor ya limitamos en servidor al depto del usuario;
+        // aquí normalmente no hace falta recargar, pero no hace daño:
+        cargarAsignados(deptoInicial);
+      }
+
+      // Cambio de departamento => recargar opciones
+      selDepto.addEventListener("change", function(){
+        cargarAsignados(selDepto.value);
+      });
+    })();
+  </script>
+{% endblock %}

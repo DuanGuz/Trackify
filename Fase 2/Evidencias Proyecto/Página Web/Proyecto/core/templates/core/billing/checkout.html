@@ -1,0 +1,66 @@
+{% extends "core/base_public.html" %}
+{% load static %}
+{% load money %}
+
+{% block title %}Checkout – Trackify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="mb-1">Suscripción Trackify</h5>
+        <p class="text-muted mb-3">Un solo plan, todo incluido para tu empresa.</p>
+
+        {% if messages %}
+          {% for m in messages %}
+            <div class="alert alert-{{ m.tags|default:'info' }}">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label>Ciclo de facturación</label>
+
+            <div class="custom-control custom-radio">
+              <input type="radio" id="cicloMensual" name="ciclo" value="MENSUAL"
+                     class="custom-control-input" {% if sub.ciclo == "MENSUAL" %}checked{% endif %}>
+              <label class="custom-control-label" for="cicloMensual">
+                Mensual — <strong>{{ sub.currency }} {{ sub.price_cents|money_cents:sub.currency }}</strong>
+              </label>
+            </div>
+
+            <div class="custom-control custom-radio">
+              <input type="radio" id="cicloAnual" name="ciclo" value="ANUAL"
+                     class="custom-control-input" {% if sub.ciclo == "ANUAL" %}checked{% endif %}>
+              <label class="custom-control-label" for="cicloAnual">
+                Anual — <strong>{{ sub.currency }} {{ sub.annual_price_cents|money_cents:sub.currency }}</strong>
+                <span class="badge badge-success">2 meses gratis</span>
+              </label>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit">
+            <i class="fe fe-credit-card mr-1"></i> Ir a pagar con MercadoPago
+          </button>
+        </form>
+        <a href="{% url 'billing_refresh' %}" class="btn btn-outline-info btn-block mt-2">
+  Refrescar estado de suscripción
+</a>
+
+<hr>
+<div class="small text-muted">
+  Estado actual: <strong>{{ sub.estado }}</strong>
+  {% if sub.next_billing_at %} · Próximo cobro: {{ sub.next_billing_at|date:"d/m/Y H:i" }}{% endif %}
+</div>
+        <hr>
+        <div class="small text-muted">
+          Estado actual: <strong>{{ sub.estado }}</strong>
+          {% if sub.next_billing_at %} · Próximo cobro: {{ sub.next_billing_at|date:"d/m/Y H:i" }}{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

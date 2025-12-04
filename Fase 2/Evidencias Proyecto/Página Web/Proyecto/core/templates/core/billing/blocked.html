@@ -1,0 +1,40 @@
+{% extends "core/base_public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-3">Tu empresa necesita una suscripción activa</h4>
+
+        <div class="alert alert-warning">
+          Para usar la plataforma, la suscripción de <strong>{{ request.user.empresa.nombre }}</strong>
+          debe estar <strong>ACTIVA</strong>.
+        </div>
+
+        {% if sub and sub.estado %}
+          <p class="mb-2">
+            Estado actual: <span class="badge {% if sub.estado == 'ACTIVA' %}bg-success{% else %}bg-secondary{% endif %}">
+              {{ sub.estado }}
+            </span>
+            {% if sub.next_billing_at %} · Próximo cobro: {{ sub.next_billing_at|date:"d/m/Y H:i" }}{% endif %}
+          </p>
+        {% endif %}
+
+        {% if can_pay %}
+          <p class="text-muted">Puedes completar el pago desde aquí:</p>
+          <a href="{% url 'billing_checkout' %}" class="btn btn-primary">
+            Ir a pagar con Mercado Pago
+          </a>
+        {% else %}
+          <p class="text-muted mb-0">
+            Por favor, ponte en contacto con <strong>Recursos humanos</strong> o <strong>Gerente</strong>
+            para que realicen el pago y habiliten el acceso.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

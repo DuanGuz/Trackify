@@ -1,0 +1,14 @@
+django
+django-admin-interface
+django-crispy-forms
+pillow
+djangorestframework
+djangorestframework-simplejwt
+crispy-bootstrap5
+openpyxl
+xhtml2pdf
+twilio
+django-extensions 
+mercadopago
+python-dotenv
+requests
